@@ -1,0 +1,1715 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Tennis by Ear</title>
+<style>
+:root { color-scheme: dark; }
+body { margin: 0; font: 20px/1.4 -apple-system, system-ui, sans-serif; background: #0b2a1a; color: #fff; }
+main { max-width: 760px; margin: 0 auto; padding: 12px 14px 60px; }
+h1 { font-size: 1.7em; margin: 0.3em 0; } h2 { font-size: 1.35em; margin: 0.6em 0 0.3em; } h3 { font-size: 1.1em; margin: 1em 0 0.3em; }
+button { display: block; width: 100%; min-height: 56px; margin: 8px 0; font: inherit; font-weight: 600; color: #fff; background: #1d5c3a; border: 2px solid #9fe2b8; border-radius: 12px; padding: 10px 14px; text-align: left; }
+button:focus { outline: 4px solid #ffd54a; }
+button[aria-pressed="true"] { background: #7a5a00; border-color: #ffd54a; }
+button.big { min-height: 38vh; font-size: 1.5em; text-align: center; background: #24457a; border-color: #b9d3ff; }
+button.swing { min-height: 22vh; font-size: 1.4em; text-align: center; background: #6a2b2b; border-color: #ffb3b3; }
+.row { display: flex; gap: 8px; } .row button { flex: 1; text-align: center; }
+fieldset { border: 2px solid #3f8a5e; border-radius: 12px; margin: 12px 0; padding: 6px 12px 10px; }
+legend { font-weight: 700; padding: 0 6px; }
+label { display: block; padding: 10px 4px; min-height: 30px; }
+input[type=checkbox], input[type=radio] { width: 26px; height: 26px; vertical-align: middle; margin-right: 10px; }
+input[type=range] { width: 100%; height: 40px; }
+.help { color: #cfe9d9; font-size: 0.85em; margin: 0 4px 6px; }
+.status { background: #062014; border-radius: 10px; padding: 10px; min-height: 2em; }
+ul { padding-left: 1.2em; } li { margin: 6px 0; }
+#camvideo { width: 160px; height: 120px; opacity: 0.6; }
+[hidden] { display: none !important; }
+.sr { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+a { color: #ffd54a; }
+</style>
+</head>
+<body>
+<main>
+<div id="live" class="sr" aria-live="polite" aria-atomic="true"></div>
+
+<section id="s-main">
+  <h1 tabindex="-1">Tennis by Ear</h1>
+  <p>Version 1. An audio tennis game. Swing the phone like a racket, or let the camera watch you.</p>
+  <button id="b-play">Play now. Simple mode, automatic feet, you swing</button>
+  <button id="b-playmine">Play with my settings</button>
+  <button id="b-settings">Settings</button>
+  <button id="b-calib">Calibration</button>
+  <button id="b-gallery">Sound gallery. Hear what each sound means</button>
+  <button id="b-help">How to play</button>
+  <button id="b-credits">Credits and sound licences</button>
+  <p id="lastinfo" class="help"></p>
+</section>
+
+<section id="s-game" hidden>
+  <h2 tabindex="-1">Match</h2>
+  <button id="g-pause" class="big">Pause</button>
+  <button id="g-swing" class="swing">Swing. Tap here to hit if motion is off</button>
+  <div id="g-move" hidden>
+    <h3>Move</h3>
+    <div class="row"><button id="g-left">Move left</button><button id="g-right">Move right</button></div>
+    <div class="row"><button id="g-fwd">Move forward</button><button id="g-back">Move back</button></div>
+  </div>
+  <button id="g-score">Score</button>
+  <button id="g-where">Where am I</button>
+  <button id="g-quit">Quit to main menu</button>
+  <h3>What happened</h3>
+  <p id="g-status" class="status"></p>
+  <p id="g-cam" class="help"></p>
+  <video id="camvideo" playsinline muted aria-hidden="true"></video>
+</section>
+
+<section id="s-paused" hidden>
+  <h2 tabindex="-1">Paused</h2>
+  <button id="p-resume" class="big">Resume</button>
+  <button id="p-score">Score</button>
+  <button id="p-settings">Settings</button>
+  <button id="p-quit">Quit to main menu</button>
+</section>
+
+<section id="s-over" hidden>
+  <h2 tabindex="-1">Match over</h2>
+  <p id="o-text" class="status"></p>
+  <button id="o-again">Play again</button>
+  <button id="o-menu">Main menu</button>
+</section>
+
+<section id="s-settings" hidden>
+  <h2 tabindex="-1">Settings</h2>
+  <p class="help">Everything is saved on this phone. Each menu has a Back button at the top and the bottom.</p>
+  <button id="st-back">Back</button>
+  <h3>Quick presets</h3>
+  <button id="st-simple">Simple preset: generous timing, automatic feet, more helpers</button>
+  <button id="st-real">Realistic preset: tighter timing, fewer helpers</button>
+  <p id="st-preset" class="help"></p>
+  <h3>Menus</h3>
+  <div id="st-menus"></div>
+  <h3>Start again</h3>
+  <button id="st-reset">Reset all settings to defaults</button>
+  <button id="st-back2">Back</button>
+</section>
+
+<section id="s-sub" hidden>
+  <h2 tabindex="-1" id="sub-title">Menu</h2>
+  <button class="sub-back">Back to settings</button>
+  <div id="sub-body"></div>
+  <button class="sub-back">Back to settings</button>
+</section>
+
+<section id="s-calib" hidden>
+  <h2 tabindex="-1">Calibration</h2>
+  <button class="to-main">Back</button>
+  <p id="c-state" class="help"></p>
+  <h3>Swinging the phone</h3>
+  <button id="c-quick">Quick swing calibration: 3 forehands and 3 backhands</button>
+  <button id="c-adv">Advanced swing calibration: still position, 5 forehands, 5 backhands, gentle and hard swings</button>
+  <button id="c-test">Test my swing: I say forehand or backhand and the power</button>
+  <button id="c-clear">Forget my swing calibration</button>
+  <h3>Speaker delay</h3>
+  <button id="c-delay">Bluetooth delay test: swing on 8 ticks</button>
+  <h3>Camera</h3>
+  <button id="c-camq">Quick camera calibration: middle, left, right, two forehands</button>
+  <button id="c-cama">Advanced camera calibration: adds forward, back, and forehand and backhand practice</button>
+  <button id="c-camcheck">Camera check: tell me if you can see me</button>
+  <button id="c-camclear">Forget my camera calibration</button>
+  <button id="c-stop">Stop the current test</button>
+  <h3>Progress</h3>
+  <p id="c-status" class="status"></p>
+  <button id="c-tap" class="swing">Tap here on each tick, or to swing</button>
+  <button class="to-main">Back</button>
+</section>
+
+<section id="s-gallery" hidden>
+  <h2 tabindex="-1">Sound gallery</h2>
+  <button class="to-main">Back</button>
+  <p class="help">Each button plays one sound and says what it means.</p>
+  <div id="gal-list"></div>
+  <button class="to-main">Back</button>
+</section>
+
+<section id="s-help" hidden>
+  <h2 tabindex="-1">How to play</h2>
+  <button class="to-main">Back</button>
+  <button id="h-read">Read how to play aloud</button>
+  <button id="h-stop">Stop reading</button>
+  <div id="help-body"></div>
+  <button class="to-main">Back</button>
+</section>
+
+<section id="s-credits" hidden>
+  <h2 tabindex="-1">Credits and sound licences</h2>
+  <button class="to-main">Back</button>
+  <div id="cred-body"></div>
+  <button class="to-main">Back</button>
+</section>
+</main>
+<script>window.TBE_CREDITS=[{"id": "338122", "use": "Racket hits (forehand)", "title": "Tennis Ball being hit", "user": "jacklilley", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/jacklilley/sounds/338122/"}, {"id": "710041", "use": "Racket hit (backhand)", "title": "Tennis-Ball-Hit", "user": "kletton97", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/kletton97/sounds/710041/"}, {"id": "412863", "use": "Power hit crack", "title": "Tennis smash", "user": "gprosser", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/gprosser/sounds/412863/"}, {"id": "533410", "use": "Ball bounces", "title": "TennisBallBounce.wav", "user": "drivr3joe", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/drivr3joe/sounds/533410/"}, {"id": "788264", "use": "Ball bounce on a tennis court", "title": "Sports Tennis Ball Bouncing", "user": "amsaenz03", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/amsaenz03/sounds/788264/"}, {"id": "170501", "use": "Footsteps in tennis shoes", "title": "Footsteps, Tile, Male Tennis Shoes, Fast Pace.wav", "user": "SpliceSound", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/SpliceSound/sounds/170501/"}, {"id": "389590", "use": "Swing and miss", "title": "Swing Woosh", "user": "Jofae", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/Jofae/sounds/389590/"}, {"id": "237980", "use": "Recorded whoosh", "title": "Very Big Whoosh", "user": "Paul368", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/Paul368/sounds/237980/"}, {"id": "653920", "use": "Quiet club crowd murmur", "title": "Small Crowd Walla", "user": "IENBA", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/IENBA/sounds/653920/"}, {"id": "634880", "use": "Big stadium crowd murmur", "title": "Generic Exterior Walla", "user": "brunoboselli", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/brunoboselli/sounds/634880/"}, {"id": "819358", "use": "Stadium atmosphere and applause at a real tennis match (Cincinnati Open)", "title": "SPRTCourt-EXT_Tennis Match, Hot Summer Day, applause, Cincinnati Open_QCF_Cincinnati Ohio_iPhone SE2 with Sennheiser Ambeo", "user": "treytatum3", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/treytatum3/sounds/819358/"}, {"id": "114052", "use": "Applause at a real ATP tennis tournament (Rotterdam)", "title": "tennis match.wav", "user": "huubjeroen", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/huubjeroen/sounds/114052/"}, {"id": "484513", "use": "Club applause", "title": "small group applauding (48/24)", "user": "neilraouf", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/neilraouf/sounds/484513/"}, {"id": "462362", "use": "Club applause, short", "title": "Small applause", "user": "Breviceps", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/Breviceps/sounds/462362/"}, {"id": "160493", "use": "Big cheer", "title": "Large crowd applause.wav", "user": "Bansemer", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/Bansemer/sounds/160493/"}, {"id": "264499", "use": "Crowd ooh", "title": "Crowd Ooohs and Ahhhs in Excitement", "user": "noah0189", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/noah0189/sounds/264499/"}, {"id": "635110", "use": "Crowd gasp", "title": "Crowd gasp.wav", "user": "RadioCounseling", "licence": "Creative Commons 0", "licenceUrl": "http://creativecommons.org/publicdomain/zero/1.0/", "url": "https://freesound.org/people/RadioCounseling/sounds/635110/"}];</script>
+<script>/* Tennis by Ear - pure game logic (no DOM, no audio). Works in the browser (window.TBE) and in node (module.exports). */
+(function (root) {
+'use strict';
+var T = {};
+T.VERSION = 1;
+
+/* ---------- random ---------- */
+T.rng = function (seed) { var s = (seed >>> 0) || 1; return function () { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; };
+function pick(r, arr) { return arr[Math.floor(r() * arr.length) % arr.length]; }
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+T.clamp = clamp;
+
+/* ---------- settings ---------- */
+T.DEFAULTS = {
+  preset: 'simple',
+  mode: 'auto',            // auto | autoEasy | lanes | camera
+  strokeSource: 'detect',  // detect | game
+  hand: 'right',
+  sens: 5,                 // swing sensitivity 1..10
+  powerMatters: false,
+  missMode: 'forgiving',   // forgiving | strict
+  wrongStroke: 'allow',    // allow | weak | miss
+  timingScale: 1.3,        // timing generosity multiplier (0.6..2)
+  ballSpeed: 1.0,          // 0.6..1.4 (bigger = faster ball)
+  difficulty: 'easy',      // easy normal hard pro
+  opponent: 'diego',       // martina diego sophie ben random
+  match: 'short',          // practice short set best3
+  serve: 'opponent',       // opponent alternate me
+  laneMove: 'both',        // both lr fb
+  autoRecover: true,
+  stepDetect: false,
+  tapSwing: true,
+  faceDownPause: true,
+  strokeHint: true,
+  // cues: enabled + volume 0..1
+  cSteps: true, vSteps: 0.8, stepStyle: 'real',
+  cWhoosh: true, vWhoosh: 0.7, whooshStyle: 'air',
+  cBounce: true, vBounce: 0.9, cOppBounce: true,
+  cTiming: true, vTiming: 0.7, timingStyle: 'wood', cue1Lead: 0.5, cue2Lead: 0, // 0 = automatic by difficulty
+  cEdges: true, vEdges: 0.9,
+  cPower: true, vPower: 0.9, powerSpeech: true,
+  cPosSpeech: true,
+  cRacket: true, vRacket: 0.9,
+  cOrient: false, vOrient: 0.5,
+  crowd: 'club', vCrowd: 0.4, crowdHush: true, cCrowdReact: true,
+  commentary: 'notable',   // every notable off
+  commentGood: true, commentLoss: true,
+  umpire: 'every',         // every request
+  stereoWidth: 1.0, mono: false, swapLR: false,
+  speechRate: 1.0, speechOut: 'voice', // voice live both
+  camFps: 15, camModel: 'lite', camHands: 'both', camSens: 5, camBattery: true, camFallback: 'auto',
+  latency: 0,              // ms, Bluetooth speaker delay compensation
+  calib: null, camCalib: null
+};
+T.PRESETS = {
+  simple: { mode: 'auto', powerMatters: false, missMode: 'forgiving', wrongStroke: 'allow', timingScale: 1.3, ballSpeed: 0.9, difficulty: 'easy', strokeHint: true,
+    cSteps: true, cWhoosh: true, cBounce: true, cTiming: true, cEdges: true, cPower: true, powerSpeech: true, cPosSpeech: true, autoRecover: true, commentary: 'notable', umpire: 'every' },
+  realistic: { powerMatters: true, missMode: 'strict', wrongStroke: 'weak', timingScale: 0.85, ballSpeed: 1.05, difficulty: 'normal', strokeHint: false,
+    cTiming: false, cPosSpeech: false, powerSpeech: false, autoRecover: false, commentary: 'notable', umpire: 'every' }
+};
+T.applyPreset = function (s, name) { var p = T.PRESETS[name]; if (!p) return s; for (var k in p) s[k] = p[k]; s.preset = name; return s; };
+T.mergeSettings = function (saved) {
+  var s = {}, k; for (k in T.DEFAULTS) s[k] = T.DEFAULTS[k];
+  if (saved && typeof saved === 'object') for (k in saved) if (k in T.DEFAULTS) {
+    var d = T.DEFAULTS[k], v = saved[k];
+    if (d === null || typeof v === typeof d) s[k] = v;
+  }
+  return s;
+};
+T.KEY = 'tbe.v1.settings';
+T.loadSettings = function (store) { try { var raw = store.getItem(T.KEY); return T.mergeSettings(raw ? JSON.parse(raw) : null); } catch (e) { return T.mergeSettings(null); } };
+T.saveSettings = function (store, s) { try { store.setItem(T.KEY, JSON.stringify(s)); return true; } catch (e) { return false; } };
+T.resetSettings = function (store) { try { store.removeItem(T.KEY); } catch (e) {} return T.mergeSettings(null); };
+
+/* ---------- difficulty and timing ---------- */
+T.DIFF = {
+  easy:   { flight: 2.3, win: 0.34, err: 1.6, pace: 0.8, cue2: 0.33, oppWin: 0.04 },
+  normal: { flight: 1.8, win: 0.25, err: 1.0, pace: 1.0, cue2: 0.2,  oppWin: 0.09 },
+  hard:   { flight: 1.45, win: 0.18, err: 0.7, pace: 1.15, cue2: 0.15, oppWin: 0.14 },
+  pro:    { flight: 1.15, win: 0.13, err: 0.45, pace: 1.3, cue2: 0.12, oppWin: 0.2 }
+};
+T.diff = function (s) { return T.DIFF[s.difficulty] || T.DIFF.normal; };
+/* half-width of the good timing window, seconds */
+T.timingWindow = function (s) {
+  var w = T.diff(s).win * clamp(s.timingScale || 1, 0.5, 2.5);
+  if (s.mode === 'autoEasy') w *= 1.15;
+  return { good: w, perfect: w * 0.35, scrappy: s.missMode === 'forgiving' ? w * 1.7 : w };
+};
+T.cueLeads = function (s) {
+  var c2 = s.cue2Lead > 0 ? s.cue2Lead : T.diff(s).cue2;
+  return { first: clamp(s.cue1Lead || 0.5, 0.2, 1.2), second: clamp(c2, 0.05, 0.6) };
+};
+/* dt = swing time - ideal time (s). Returns {grade, quality, side}  grade: perfect good scrappy miss */
+T.judgeTiming = function (dt, s) {
+  var w = T.timingWindow(s), a = Math.abs(dt), side = dt < 0 ? 'early' : 'late';
+  if (a <= w.perfect) return { grade: 'perfect', quality: 1 - 0.1 * a / w.perfect, side: a < 0.02 ? 'on time' : side };
+  if (a <= w.good) return { grade: 'good', quality: 0.9 - 0.4 * (a - w.perfect) / (w.good - w.perfect), side: side };
+  if (a <= w.scrappy) return { grade: 'scrappy', quality: 0.25, side: side };
+  return { grade: 'miss', quality: 0, side: side };
+};
+
+/* ---------- opponents ---------- */
+T.OPPONENTS = {
+  martina: { name: 'Martina Steel', style: 'baseline power', desc: 'Hits hard and flat, loves deep balls into the corners.', deep: 0.5, short: 0.08, power: 0.8, err: 1.0, cross: 0.6, spins: ['flat', 'flat', 'topspin'] },
+  diego:   { name: 'Diego Loop', style: 'heavy topspin', desc: 'Steady and patient, high looping topspin, mostly cross-court.', deep: 0.3, short: 0.12, power: 0.55, err: 0.7, cross: 0.8, spins: ['topspin', 'topspin', 'flat'] },
+  sophie:  { name: 'Sophie Slice', style: 'slice and drop shots', desc: 'Changes pace, low slices and sneaky short balls.', deep: 0.2, short: 0.35, power: 0.45, err: 0.9, cross: 0.5, spins: ['slice', 'slice', 'topspin'] },
+  ben:     { name: 'Big Ben Boom', style: 'big hitter', desc: 'Huge serve and huge forehand, but makes mistakes.', deep: 0.45, short: 0.1, power: 0.95, err: 1.5, cross: 0.55, spins: ['flat', 'flat', 'flat'] }
+};
+T.oppKeys = ['martina', 'diego', 'sophie', 'ben'];
+
+/* ---------- court model ---------- */
+/* x: -1 left lane, 0 centre, 1 right lane (from the player's view). depth: -2 well behind baseline, -1 behind baseline, 0 on baseline, 1 inside, 2 service line, 3 net */
+T.DEPTH_MIN = -2; T.DEPTH_MAX = 3;
+T.depthName = function (d) { return ({ '-2': 'well behind the baseline', '-1': 'just behind the baseline', '0': 'on the baseline', '1': 'inside the baseline', '2': 'at the service line', '3': 'at the net' })[String(d)]; };
+T.laneName = function (x) { return x < 0 ? 'left lane' : x > 0 ? 'right lane' : 'centre lane'; };
+T.move = function (pos, dir, laneMove) {
+  var p = { x: pos.x, d: pos.d }, blocked = false;
+  laneMove = laneMove || 'both';
+  if ((dir === 'left' || dir === 'right') && laneMove === 'fb') return { pos: p, blocked: false, ignored: true };
+  if ((dir === 'forward' || dir === 'back') && laneMove === 'lr') return { pos: p, blocked: false, ignored: true };
+  if (dir === 'left') { if (p.x <= -1) blocked = true; else p.x--; }
+  if (dir === 'right') { if (p.x >= 1) blocked = true; else p.x++; }
+  if (dir === 'forward') { if (p.d >= T.DEPTH_MAX) blocked = true; else p.d++; }
+  if (dir === 'back') { if (p.d <= T.DEPTH_MIN) blocked = true; else p.d--; }
+  return { pos: p, blocked: blocked, edge: T.edgeCue(p, pos) };
+};
+/* corner = outer lane at or behind the baseline (two rumbles); line = single rumble for sideline (outer lane inside court) or crossing the baseline in the centre */
+T.edgeCue = function (p, prev) {
+  var outer = Math.abs(p.x) >= 1, atBase = p.d <= 0;
+  if (outer && atBase) return 'corner';
+  if (outer) return 'line';
+  if (prev && ((prev.d > 0 && p.d <= 0) || (prev.d <= 0 && p.d > 0))) return 'line';
+  if (p.d <= T.DEPTH_MIN || p.d >= T.DEPTH_MAX) return 'line';
+  return null;
+};
+T.posSpeech = function (p, dir) {
+  var w = { forward: 'Moving forward, ', back: 'Moving back, ', left: 'Moving left, ', right: 'Moving right, ' }[dir] || '';
+  return w + T.laneName(p.x) + ', ' + T.depthName(p.d);
+};
+/* required depth for a ball depth: short needs d>=1, normal needs -1..1, deep needs d<=-1 (on auto feet the game puts you there) */
+T.depthOk = function (ballDepth, d) {
+  if (ballDepth === 'short') return d >= 1 ? 'ok' : (d === 0 ? 'stretch' : 'late');
+  if (ballDepth === 'deep') return d <= -1 ? 'ok' : (d === 0 ? 'jammed' : 'jammed');
+  return (d >= -1 && d <= 1) ? 'ok' : (d < -1 ? 'stretch' : 'jammed');
+};
+T.idealDepth = function (ballDepth) { return ballDepth === 'short' ? 1 : ballDepth === 'deep' ? -1 : 0; };
+
+/* camera position from pose summary. m = {hipX, size (torso length)} in image units; c = calibration {cx, size, left, right, fwdRatio, backRatio} */
+T.camPosition = function (m, c, prevLane) {
+  if (!m || !c) return null;
+  var dx = m.hipX - c.cx;
+  var cl = (c.left != null ? c.left : c.cx + 0.12) - c.cx, cr = (c.right != null ? c.right : c.cx - 0.12) - c.cx, rel;
+  if (Math.abs(cl) < 0.02) cl = 0.12 * (cr > 0 ? -1 : 1);
+  if (Math.abs(cr) < 0.02) cr = -cl;
+  if (dx * cr >= 0) rel = Math.abs(dx) / Math.abs(cr); else rel = -Math.abs(dx) / Math.abs(cl);
+  var lane = prevLane == null ? 0 : prevLane;
+  var on = 0.55, off = 0.35;
+  if (lane === 0) { if (rel <= -on) lane = -1; else if (rel >= on) lane = 1; }
+  else if (lane === -1) { if (rel > -off) lane = rel >= on ? 1 : 0; }
+  else if (lane === 1) { if (rel < off) lane = rel <= -on ? -1 : 0; }
+  var ratio = m.size / c.size, d;
+  var fwd = c.fwdRatio || 1.18, back = c.backRatio || 0.85;
+  var up = (fwd - 1), dn = (1 - back);
+  if (ratio >= 1 + up * 1.8) d = 2; else if (ratio >= 1 + up * 0.6) d = 1;
+  else if (ratio <= 1 - dn * 1.8) d = -2; else if (ratio <= 1 - dn * 0.6) d = -1; else d = 0;
+  return { rel: clamp(rel, -1.5, 1.5), x: lane, d: d, ratio: ratio };
+};
+
+/* ---------- swing detection (phone motion) ---------- */
+function vlen(v) { return Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]); }
+function norm(v) { var l = vlen(v) || 1; return [v[0] / l, v[1] / l, v[2] / l]; }
+function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+T.vlen = vlen; T.norm = norm; T.dot = dot;
+T.swingThreshold = function (sens, calib) {
+  var base = 330 - 22 * clamp(sens, 1, 10); // deg/s: sens 5 -> 220
+  if (calib && calib.minPeak) base = Math.min(base, Math.max(110, calib.minPeak * 0.55 * (1.1 - (sens - 5) * 0.06)));
+  return base;
+};
+/* Feed samples {t (s), rot:[a,b,g] deg/s, acc:[x,y,z] m/s2 without gravity}. Emits swing {t (peak time), peak, accPeak, R (integrated rotation vector), dur} */
+T.SwingDetector = function (opts) {
+  this.o = opts || {}; this.state = 'idle'; this.cool = -1; this.buf = null; this.last = null;
+};
+T.SwingDetector.prototype.feed = function (smp) {
+  var o = this.o, thr = o.threshold || 220, off = thr * 0.45, mag = vlen(smp.rot), am = smp.acc ? vlen(smp.acc) : 0;
+  var dt = this.last == null ? 0.016 : clamp(smp.t - this.last, 0, 0.1); this.last = smp.t;
+  if (this.state === 'idle') {
+    if (smp.t < this.cool) return null;
+    if (mag >= thr) { this.state = 'swing'; this.buf = { t0: smp.t, peak: mag, peakT: smp.t, acc: am, R: [smp.rot[0] * dt, smp.rot[1] * dt, smp.rot[2] * dt], below: 0 }; }
+    return null;
+  }
+  var b = this.buf;
+  b.R[0] += smp.rot[0] * dt; b.R[1] += smp.rot[1] * dt; b.R[2] += smp.rot[2] * dt;
+  if (mag > b.peak) { b.peak = mag; b.peakT = smp.t; }
+  if (am > b.acc) b.acc = am;
+  if (mag < off) b.below += dt; else b.below = 0;
+  if (b.below >= 0.05 || smp.t - b.t0 > 0.7) {
+    this.state = 'idle'; this.cool = smp.t + (o.cooldown || 0.45);
+    var sw = { t: b.peakT, peak: b.peak, accPeak: b.acc, R: b.R, dur: smp.t - b.t0 };
+    if (vlen(b.R) < (o.minAngle || 15)) return null; // a twitch, not a swing
+    return sw;
+  }
+  return null;
+};
+/* forehand / backhand from integrated rotation. calib.axis = unit vector pointing to forehand. Default guess: phone upright, rotation about the phone's y axis (gamma), positive = forehand for right-handers */
+T.classifySwing = function (sw, calib, hand) {
+  var axis = calib && calib.axis ? calib.axis : [0, 0, 1];
+  var sign = 1;
+  if (!(calib && calib.axis) && hand === 'left') sign = -1;
+  var p = dot(sw.R, axis) * sign, l = vlen(sw.R) || 1, conf = Math.abs(p) / l;
+  return { stroke: p >= 0 ? 'forehand' : 'backhand', confidence: conf, clear: conf >= 0.35 };
+};
+/* power 0..1 from peak rotation and acceleration, using calibrated gentle/hard range */
+T.swingPower = function (sw, calib) {
+  var lo = calib && calib.gentle ? calib.gentle : 200, hi = calib && calib.hard ? calib.hard : 750;
+  if (hi <= lo + 20) hi = lo + 20;
+  var p = (sw.peak - lo) / (hi - lo);
+  if (sw.accPeak) { var alo = calib && calib.gentleAcc ? calib.gentleAcc : 6, ahi = calib && calib.hardAcc ? calib.hardAcc : 28; p = 0.65 * p + 0.35 * (sw.accPeak - alo) / Math.max(2, ahi - alo); }
+  return clamp(p, 0, 1);
+};
+/* build calibration from labelled swings [{stroke, sw, kind:'gentle'|'hard'|undefined}] and optional neutral gravity */
+T.buildCalibration = function (samples, neutral, hand) {
+  var fh = [0, 0, 0], bh = [0, 0, 0], nf = 0, nb = 0, peaks = [], gentle = [], hard = [], gA = [], hA = [];
+  samples.forEach(function (s) {
+    var u = norm(s.sw.R);
+    if (s.stroke === 'forehand') { fh[0] += u[0]; fh[1] += u[1]; fh[2] += u[2]; nf++; }
+    else { bh[0] += u[0]; bh[1] += u[1]; bh[2] += u[2]; nb++; }
+    peaks.push(s.sw.peak);
+    if (s.kind === 'gentle') { gentle.push(s.sw.peak); gA.push(s.sw.accPeak || 0); }
+    if (s.kind === 'hard') { hard.push(s.sw.peak); hA.push(s.sw.accPeak || 0); }
+  });
+  if (!nf || !nb) return null;
+  var d = [fh[0] / nf - bh[0] / nb, fh[1] / nf - bh[1] / nb, fh[2] / nf - bh[2] / nb];
+  if (vlen(d) < 0.3) return null; // forehands and backhands look the same
+  var avg = function (a) { return a.reduce(function (x, y) { return x + y; }, 0) / a.length; };
+  peaks.sort(function (a, b) { return a - b; });
+  var c = { axis: norm(d), minPeak: peaks[0], medPeak: peaks[Math.floor(peaks.length / 2)], hand: hand || 'right', n: samples.length, neutral: neutral || null };
+  c.gentle = gentle.length ? avg(gentle) : peaks[0] * 0.9;
+  c.hard = hard.length ? avg(hard) : peaks[peaks.length - 1] * 1.1;
+  if (gA.length) c.gentleAcc = avg(gA); if (hA.length) c.hardAcc = avg(hA);
+  // separation check: how many calibration swings would be classified right
+  var ok = 0; samples.forEach(function (s) { if (T.classifySwing(s.sw, c).stroke === s.stroke) ok++; });
+  c.score = ok / samples.length;
+  return c;
+};
+
+/* ---------- camera swing detection ---------- */
+/* feed {t, x} where x = wrist centre in shoulder widths relative to the body centre (positive = image right). Emits {t, speed, dir:+1/-1} */
+T.CamSwingDetector = function (opts) { this.o = opts || {}; this.hist = []; this.cool = -1; this.active = null; };
+T.CamSwingDetector.prototype.feed = function (f) {
+  var h = this.hist; h.push(f); while (h.length > 6) h.shift();
+  if (h.length < 2) return null;
+  var a = h[h.length - 2], b = h[h.length - 1], dt = Math.max(0.01, b.t - a.t), v = (b.x - a.x) / dt;
+  var thr = this.o.threshold || 2.4; // shoulder widths per second
+  if (!this.active) {
+    if (b.t < this.cool) return null;
+    if (Math.abs(v) >= thr) this.active = { dir: v > 0 ? 1 : -1, peak: Math.abs(v), t: (a.t + b.t) / 2, dist: Math.abs(b.x - a.x) };
+    return null;
+  }
+  var s = this.active;
+  if ((v > 0 ? 1 : -1) === s.dir && Math.abs(v) >= thr * 0.4) {
+    s.dist += Math.abs(b.x - a.x);
+    if (Math.abs(v) > s.peak) { s.peak = Math.abs(v); s.t = (a.t + b.t) / 2; }
+    return null;
+  }
+  this.active = null; this.cool = b.t + (this.o.cooldown || 0.45);
+  if (s.dist < (this.o.minDist || 0.6)) return null;
+  return { t: s.t, speed: s.peak, dir: s.dir, dist: s.dist };
+};
+/* camera forehand direction: calibration stores fhDir (+1/-1); default for a right-hander facing an unmirrored front camera: forehand moves the hands toward image right (player's left) */
+T.camStroke = function (ev, camCalib, hand) {
+  var fd = camCalib && camCalib.fhDir ? camCalib.fhDir : (hand === 'left' ? -1 : 1);
+  return ev.dir === fd ? 'forehand' : 'backhand';
+};
+T.camPower = function (ev, camCalib) {
+  var lo = camCalib && camCalib.gentle ? camCalib.gentle : 2.6, hi = camCalib && camCalib.hard ? camCalib.hard : 7;
+  return clamp((ev.speed - lo) / Math.max(0.5, hi - lo), 0, 1);
+};
+
+/* ---------- scoring ---------- */
+T.newMatch = function (format, firstServer) {
+  return { format: format || 'short', pts: [0, 0], games: [0, 0], sets: [0, 0], setScores: [], tb: false, server: firstServer == null ? 1 : firstServer, over: false, winner: -1, rally: 0, bestRally: 0, points: [0, 0], rallies: 0 };
+};
+/* player index: 0 = you, 1 = opponent */
+T.PT = ['love', 'fifteen', 'thirty', 'forty'];
+T.pointWon = function (m, who, serveRule) {
+  var ev = { point: who, game: false, set: false, match: false, tbStart: false };
+  if (m.over) return ev;
+  m.points[who]++;
+  if (m.format === 'practice') return ev;
+  var o = 1 - who;
+  m.pts[who]++;
+  var gameWon = false;
+  if (m.tb) { if (m.pts[who] >= 7 && m.pts[who] - m.pts[o] >= 2) gameWon = true; }
+  else if (m.pts[who] >= 4 && m.pts[who] - m.pts[o] >= 2) gameWon = true;
+  if (m.tb && !gameWon && serveRule === 'alternate' && (m.pts[0] + m.pts[1]) % 2 === 1) m.server = 1 - m.server;
+  if (!gameWon) return ev;
+  ev.game = true; m.games[who]++; m.pts = [0, 0];
+  var wasTb = m.tb; m.tb = false;
+  if (serveRule === 'alternate') m.server = 1 - m.server;
+  var g = m.games, setWon = false;
+  if (m.format === 'short') { if (g[who] >= 4) setWon = true; }
+  else {
+    if (wasTb) setWon = true;
+    else if (g[who] >= 6 && g[who] - g[o] >= 2) setWon = true;
+    else if (g[0] === 6 && g[1] === 6) { m.tb = true; ev.tbStart = true; }
+  }
+  if (!setWon) return ev;
+  ev.set = true; m.sets[who]++; m.setScores.push([g[0], g[1]]); m.games = [0, 0];
+  var need = m.format === 'best3' ? 2 : 1;
+  if (m.sets[who] >= need) { m.over = true; m.winner = who; ev.match = true; }
+  return ev;
+};
+/* score words, server's score first */
+T.pointCall = function (m, names) {
+  var s = m.server === 0 ? 0 : 1, r = 1 - s, a = m.pts[s], b = m.pts[r];
+  names = names || ['you', 'opponent'];
+  if (m.tb) {
+    if (a === b) return 'Tie-break, ' + a + ' all';
+    var lead = a > b ? s : r; return 'Tie-break, ' + Math.max(a, b) + ' ' + Math.min(a, b) + ', ' + (lead === 0 ? 'to you' : names[1]);
+  }
+  if (a >= 3 && b >= 3) {
+    if (a === b) return 'Deuce';
+    var adv = a > b ? s : r;
+    return adv === 0 ? 'Advantage you' : 'Advantage ' + names[1];
+  }
+  if (a === b) return a === 0 ? 'Love all' : T.cap(T.PT[a]) + ' all';
+  return T.cap(T.PT[a] + ' ' + T.PT[b]);
+};
+T.cap = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
+T.gamesCall = function (m, names) {
+  var g = m.games, n = names[1];
+  if (g[0] === g[1]) return g[0] + ' games all';
+  return (g[0] > g[1] ? 'You lead ' : n + ' leads ') + Math.max(g[0], g[1]) + ' games to ' + Math.min(g[0], g[1]);
+};
+T.fullScore = function (m, names) {
+  if (m.format === 'practice') return 'Practice rally. Best rally ' + m.bestRally + ' shots. Points: you ' + m.points[0] + ', ' + names[1] + ' ' + m.points[1] + '.';
+  var parts = [];
+  if (m.format === 'best3') parts.push('Sets: you ' + m.sets[0] + ', ' + names[1] + ' ' + m.sets[1] + '.');
+  parts.push(T.gamesCall(m, names) + '.');
+  if (m.pts[0] || m.pts[1] || m.tb) parts.push(T.pointCall(m, names) + '.');
+  parts.push((m.server === 0 ? 'You are' : names[1] + ' is') + ' serving.');
+  return parts.join(' ');
+};
+/* what to announce after a point */
+T.announce = function (m, ev, names) {
+  var n = names[1];
+  if (m.format === 'practice') return null;
+  if (ev.match) return 'Game, set and match, ' + (ev.point === 0 ? 'to you! Well played.' : n + '.') + ' ' + m.setScores.map(function (s) { return s[0] + ' ' + s[1]; }).join(', ');
+  if (ev.set) return 'Game and set, ' + (ev.point === 0 ? 'you' : n) + '. ' + (m.format === 'best3' ? 'Sets: you ' + m.sets[0] + ', ' + n + ' ' + m.sets[1] + '.' : '');
+  if (ev.game) return 'Game, ' + (ev.point === 0 ? 'you' : n) + '. ' + T.gamesCall(m, names) + (ev.tbStart ? '. Tie-break.' : '.');
+  return T.pointCall(m, names);
+};
+
+/* ---------- rally engine ---------- */
+/* opponent shot. ctx: {lastQuality, lastPower, lastDir ('cross'|'line'|'middle'), serve:bool, second:bool} */
+T.oppShot = function (r, s, oppKey, ctx) {
+  var O = T.OPPONENTS[oppKey] || T.OPPONENTS.diego, D = T.diff(s);
+  ctx = ctx || {};
+  var depthRoll = r(), depth = depthRoll < O.short * (ctx.serve ? 0.3 : 1) ? 'short' : depthRoll < O.short + O.deep ? 'deep' : 'normal';
+  if (ctx.serve) depth = r() < 0.5 ? 'deep' : 'normal';
+  var power = clamp(O.power * D.pace * (0.75 + 0.5 * r()) * (ctx.serve ? (ctx.second ? 0.8 : 1.15) : 1), 0.1, 1);
+  if (ctx.lastQuality != null && ctx.lastQuality > 0.8 && ctx.lastPower > 0.6) power *= 0.8; // pushed back by a good shot
+  var spin = ctx.serve ? (ctx.second ? 'kick' : 'flat') : pick(r, O.spins);
+  if (depth === 'short' && spin !== 'flat') spin = r() < 0.5 ? 'slice' : 'drop shot';
+  // where the opponent stands (player's frame, -1 left .. 1 right) depends on where the player's ball went
+  var fromX = ctx.lastTo != null ? clamp(-ctx.lastTo * 0.9 + (r() - 0.5) * 0.4, -1, 1) : (r() < 0.5 ? -0.7 : 0.7);
+  if (ctx.serve) fromX = ctx.serveSide || 0.6;
+  var cross = r() < O.cross;
+  var toX = cross ? (fromX >= 0 ? -1 : 1) * (0.5 + 0.5 * r()) : (fromX >= 0 ? 1 : -1) * (0.4 + 0.6 * r());
+  if (r() < 0.15) toX = (r() - 0.5) * 0.6; // through the middle
+  if (ctx.serve) toX = (ctx.serveTo != null ? ctx.serveTo : (r() < 0.5 ? -0.8 : 0.8));
+  var flight = D.flight / clamp(s.ballSpeed || 1, 0.5, 1.6) * (1.15 - 0.3 * power);
+  if (spin === 'topspin') flight *= 1.08; if (spin === 'slice') flight *= 1.12; if (spin === 'drop shot') flight *= 1.25; if (ctx.serve && !ctx.second) flight *= 0.85;
+  var shotType = ctx.serve ? (ctx.second ? 'second serve' : 'serve') : pick(r, ['forehand', 'forehand', 'backhand']);
+  return { from: oppKey, fromX: fromX, toX: clamp(toX, -1, 1), lane: toX < -0.33 ? -1 : toX > 0.33 ? 1 : 0, depth: depth, power: power, spin: spin, flight: flight, bounceFrac: depth === 'deep' ? 0.82 : depth === 'short' ? 0.55 : 0.72, cross: cross, shot: shotType, powerful: power > 0.72 && depth === 'deep' };
+};
+/* which stroke the ball needs, given where it passes the player */
+T.neededStroke = function (ball, px, hand) {
+  var rel = ball.toX - px; if (Math.abs(rel) < 0.12) rel = ball.toX >= 0 ? 0.2 : -0.2;
+  var right = rel > 0; if (hand === 'left') right = !right;
+  return right ? 'forehand' : 'backhand';
+};
+/* auto feet: place the player so the ball comes to a comfortable side */
+T.autoPlace = function (ball, hand, r) {
+  var stroke = r() < 0.6 ? 'forehand' : 'backhand';
+  var side = (stroke === 'forehand') === (hand !== 'left') ? 1 : -1; // ball to the right of the player for a right-hander's forehand
+  var x = clamp(ball.toX - side * 0.35, -1, 1);
+  if (Math.sign(ball.toX - x) !== side) x = ball.toX - side * 0.35;
+  return { x: x, d: T.idealDepth(ball.depth), stroke: stroke };
+};
+/* judge the player's swing. swing: {dt (s, swing - ideal) or null for no swing, stroke, power}. pos: player position {x (lane or continuous), d} */
+T.judgeHit = function (ball, swing, pos, s, auto) {
+  var res = { ok: false, reason: '', quality: 0, timing: null, stroke: null, needed: T.neededStroke(ball, pos.x, s.hand), power: 0 };
+  if (!swing) { res.reason = 'noswing'; return res; }
+  // lane
+  if (!auto) {
+    var laneOk = Math.abs(ball.toX - pos.x) <= 0.6;
+    if (!laneOk) { res.reason = 'lane'; return res; }
+    var dOk = T.depthOk(ball.depth, pos.d);
+    res.depthOk = dOk;
+  }
+  var tm = T.judgeTiming(swing.dt, s); res.timing = tm;
+  if (tm.grade === 'miss') { res.reason = swing.dt < 0 ? 'early' : 'late'; return res; }
+  var q = tm.quality;
+  if (res.depthOk === 'late' && ball.depth === 'short') { res.reason = 'doublebounce'; return res; }
+  if (res.depthOk === 'jammed') q *= s.difficulty === 'easy' ? 0.8 : 0.55;
+  if (res.depthOk === 'stretch') q *= 0.75;
+  res.stroke = s.strokeSource === 'game' || s.mode === 'autoEasy' ? res.needed : (swing.stroke || res.needed);
+  if (res.stroke !== res.needed) {
+    if (s.wrongStroke === 'miss') { res.reason = 'wrongstroke'; return res; }
+    if (s.wrongStroke === 'weak') q *= 0.45;
+    res.wrong = true;
+  }
+  res.power = s.powerMatters ? clamp(swing.power || 0.5, 0, 1) : 0.6;
+  res.quality = clamp(q, 0, 1); res.ok = true;
+  return res;
+};
+/* outcome of the player's shot: 'winner' | 'error' | 'in' (opponent must play), plus direction */
+T.myShot = function (r, hit, s, oppKey) {
+  var O = T.OPPONENTS[oppKey] || T.OPPONENTS.diego, D = T.diff(s), q = hit.quality, p = hit.power;
+  var dir = hit.timing && hit.timing.side === 'early' ? 'cross' : hit.timing && hit.timing.side === 'late' ? 'line' : (r() < 0.6 ? 'cross' : 'line');
+  var myErr = clamp((1 - q) * 0.35 * (s.difficulty === 'easy' ? 0.4 : s.difficulty === 'normal' ? 0.8 : 1.1) + (s.powerMatters ? Math.max(0, p - 0.85) * 0.5 : 0), 0, 0.6);
+  if (hit.timing && hit.timing.grade === 'scrappy') myErr = Math.max(myErr, s.difficulty === 'easy' ? 0.12 : 0.3);
+  var winP = clamp(q * q * (0.04 + 0.2 * p) * Math.sqrt(D.err), 0, 0.4);
+  var oppErr = clamp(0.04 * O.err * D.err * (0.5 + q * 0.7 + p * 0.5), 0.01, 0.35);
+  var x = r(), out;
+  if (x < myErr) out = 'error'; else if (x < myErr + winP) out = 'winner'; else if (x < myErr + winP + oppErr) out = 'opperror'; else out = 'in';
+  var toX = dir === 'cross' ? (hit.stroke === 'forehand' ? -0.8 : 0.8) : (hit.stroke === 'forehand' ? 0.8 : -0.8);
+  if (s.hand === 'left') toX = -toX;
+  var errKind = r() < 0.5 ? 'net' : (dir === 'line' ? 'wide' : 'long');
+  return { out: out, dir: dir, toX: toX, deep: p > 0.6, errKind: errKind, quality: q, power: p };
+};
+
+/* ---------- commentary ---------- */
+T.sideWord = function (x, hand) { var fhSide = hand === 'left' ? -1 : 1; return (x * fhSide > 0) ? 'forehand' : 'backhand'; };
+T.describeOpp = function (ball, hand) {
+  var O = T.OPPONENTS[ball.from] || T.OPPONENTS.diego, first = O.name.split(' ')[0];
+  var pw = ball.power > 0.8 ? 'a hard' : ball.power > 0.6 ? 'a firm' : 'a soft';
+  var dir = ball.shot.indexOf('serve') >= 0 ? '' : (ball.cross ? ' cross-court' : ' down-the-line');
+  var spin = ball.spin === 'flat' ? '' : ' ' + ball.spin;
+  if (ball.spin === 'drop shot') { pw = 'a cheeky'; spin = ''; }
+  var where = ball.depth === 'deep' ? 'deep in your ' + T.sideWord(ball.toX, hand) + ' corner' : ball.depth === 'short' ? 'short, in front of you' : 'into your ' + T.sideWord(ball.toX, hand) + ' side';
+  var what = ball.spin === 'drop shot' ? 'drop shot' : ball.shot;
+  return first + ' hit ' + pw + dir + spin + ' ' + what + ' that landed ' + where;
+};
+T.lossReason = function (reason, hit, ball) {
+  return ({ noswing: 'You didn\'t swing.', lane: 'You were in the wrong lane.', early: 'Your swing was too early.', late: 'Your swing was too late.', doublebounce: 'It bounced twice before you got there; move in for short balls.', wrongstroke: 'That needed a ' + (hit && hit.needed) + '.' })[reason] || '';
+};
+T.commentWin = function (r, my, hit, oppName) {
+  var stroke = hit.stroke || 'shot', first = oppName.split(' ')[0];
+  if (my.out === 'winner') return pick(r, [
+    'What a ' + stroke + '! ' + (my.dir === 'cross' ? 'Cross-court' : 'Down the line') + ', clean winner.',
+    'Brilliant! A ' + (my.power > 0.7 ? 'thumping ' : '') + stroke + ' ' + (my.dir === 'cross' ? 'cross-court' : 'down the line') + ', ' + first + ' could only watch.',
+    'Winner! Perfect timing on that ' + stroke + '.']);
+  if (my.out === 'opperror') return pick(r, [first + ' couldn\'t handle that ' + stroke + ', into the ' + (r() < 0.5 ? 'net' : 'tramlines') + '.', 'Great pressure. ' + first + ' made the error.']);
+  return '';
+};
+T.notable = function (my, hit, rally) { return my.out === 'winner' || (hit && hit.quality > 0.85) || rally >= 8; };
+
+if (typeof module !== 'undefined' && module.exports) module.exports = T; else root.TBE = T;
+})(this);
+
+/* Tennis by Ear - audio engine. Recorded CC0 clips plus synthesised cues. All positions are relative to the player: rel -1 = your left, +1 = your right. */
+(function (root) {
+'use strict';
+var A = { ctx: null, buf: {}, ready: false, s: null, bed: null, bedGain: null, noise: null, loaded: 0, failed: [] };
+var FILES = ['hit1', 'hit2', 'hit3', 'hit4', 'power', 'bounce1', 'bounce2', 'bounce3', 'bounce4', 'step1', 'step2', 'step3', 'step4', 'swing', 'whoosh', 'club', 'stadium', 'venue', 'applsmall', 'applsmall2', 'applbig', 'appltennis', 'appltennis2', 'ooh', 'gasp'];
+A.FILES = FILES;
+A.init = function (settings) {
+  A.s = settings;
+  if (A.ctx) { if (A.ctx.state !== 'running') A.ctx.resume(); return A.ctx; }
+  var AC = root.AudioContext || root.webkitAudioContext; if (!AC) return null;
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  A.ctx = new AC();
+  var c = A.ctx;
+  A.comp = c.createDynamicsCompressor(); A.comp.threshold.value = -10; A.comp.ratio.value = 4;
+  A.master = c.createGain(); A.master.gain.value = 0.9; A.master.connect(A.comp); A.comp.connect(c.destination);
+  var b = c.createBuffer(1, c.sampleRate * 0.05, c.sampleRate); var src = c.createBufferSource(); src.buffer = b; src.connect(c.destination); src.start(0);
+  var n = c.createBuffer(1, c.sampleRate * 2, c.sampleRate), d = n.getChannelData(0); for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; A.noise = n;
+  A.loadAll();
+  return c;
+};
+A.loadAll = function () {
+  FILES.forEach(function (f) {
+    fetch('snd/' + f + '.mp3').then(function (r) { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }).then(function (ab) {
+      return new Promise(function (res, rej) { A.ctx.decodeAudioData(ab, res, rej); });
+    }).then(function (buf) { A.buf[f] = buf; A.loaded++; if (f === 'club' || f === 'venue' || f === 'stadium') A.updateCrowd(); }).catch(function () { A.failed.push(f); });
+  });
+};
+A.now = function () { return A.ctx ? A.ctx.currentTime : 0; };
+/* perf ms -> audio time */
+A.at = function (perfMs) { return A.ctx.currentTime + Math.max(0, (perfMs - performance.now()) / 1000); };
+A.pan = function (rel) {
+  var s = A.s; if (s.mono) return 0;
+  var p = Math.max(-1, Math.min(1, rel * (s.stereoWidth == null ? 1 : s.stereoWidth)));
+  return s.swapLR ? -p : p;
+};
+function out(rel, gain, when, lp) {
+  var c = A.ctx, g = c.createGain(); g.gain.value = gain; var node = g;
+  var last = g;
+  if (lp) { var f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; last.connect(f); last = f; }
+  if (c.createStereoPanner) { var p = c.createStereoPanner(); p.pan.setValueAtTime(A.pan(rel || 0), when || c.currentTime); last.connect(p); last = p; node.panner = p; }
+  last.connect(A.master);
+  return node;
+}
+A.play = function (name, o) {
+  o = o || {}; if (!A.ctx) return null; var b = A.buf[name]; if (!b) return null;
+  var c = A.ctx, when = o.when || c.currentTime, src = c.createBufferSource(); src.buffer = b;
+  if (o.rate) src.playbackRate.value = o.rate; if (o.loop) src.loop = true;
+  var g = out(o.rel, o.gain == null ? 1 : o.gain, when, o.lp); src.connect(g); src.start(when, o.offset || 0);
+  return { src: src, gain: g };
+};
+function env(g, when, a, peak, dec) { g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(peak, when + a); g.gain.exponentialRampToValueAtTime(0.0001, when + a + dec); }
+function osc(type, f, when, dur, g, f2) { var o = A.ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, when); if (f2) o.frequency.exponentialRampToValueAtTime(f2, when + dur); o.connect(g); o.start(when); o.stop(when + dur + 0.05); return o; }
+function noise(when, dur, g, type, f, q) {
+  var c = A.ctx, n = c.createBufferSource(); n.buffer = A.noise; n.loop = true; var fl = c.createBiquadFilter(); fl.type = type || 'bandpass'; fl.frequency.value = f || 1000; if (q) fl.Q.value = q;
+  n.connect(fl); fl.connect(g); n.start(when, Math.random()); n.stop(when + dur + 0.05); return { n: n, f: fl };
+}
+/* ---- cue helpers. vol(key) = enabled ? volume : 0 ---- */
+A.vol = function (k) { var s = A.s; return s['c' + k] ? (s['v' + k] == null ? 1 : s['v' + k]) : 0; };
+A.rumble = function (rel, when, gain) {
+  if (!A.ctx) return; var c = A.ctx; when = when || c.currentTime; var g = out(rel, 1, when);
+  var e = c.createGain(); e.connect(g); env(e, when, 0.02, gain || 0.9, 0.3);
+  osc('sine', 52, when, 0.35, e); osc('triangle', 78, when, 0.35, e, 60); noise(when, 0.35, e, 'lowpass', 260, 0.7);
+};
+A.edge = function (kind, rel, when) {
+  var v = A.vol('Edges'); if (!v || !A.ctx) return; when = when || A.now();
+  if (kind === 'corner') { A.rumble(rel, when, v); A.rumble(rel, when + 0.17, v); }
+  else if (kind === 'line') A.rumble(rel, when, v * 0.8);
+  else if (kind === 'wall') { A.rumble(rel, when, v); A.rumble(rel, when + 0.12, v); A.rumble(rel, when + 0.24, v); }
+};
+A.timingCue = function (n, rel, when, styleOverride) {
+  var v = A.vol('Timing'); if (!v || !A.ctx) return; var c = A.ctx; when = when || c.currentTime;
+  var st = styleOverride || A.s.timingStyle, g = out(rel, 1, when), e = c.createGain(); e.connect(g);
+  if (st === 'wood') { var f = n === 1 ? 420 : 640; env(e, when, 0.003, v, 0.12); osc('sine', f, when, 0.15, e); var e2 = c.createGain(); e2.connect(g); env(e2, when, 0.002, v * 0.5, 0.04); noise(when, 0.06, e2, 'bandpass', f * 2.4, 3); osc('triangle', f / 2, when, 0.12, e); }
+  else if (st === 'deep') { var f2 = n === 1 ? 98 : 147; env(e, when, 0.012, v, 0.3); osc('sine', f2, when, 0.35, e); osc('sine', f2 * 2, when, 0.3, e); osc('triangle', f2 * 3, when, 0.2, e); }
+  else if (st === 'soft') { env(e, when, 0.005, v * 0.6, 0.12); osc('sine', n === 1 ? 660 : 990, when, 0.15, e); }
+  else if (st === 'racket') { A.play('hit3', { rel: rel, when: when, gain: v * 0.35, rate: n === 1 ? 0.7 : 1.0 }); }
+};
+A.powerWarn = function (rel, when) {
+  var v = A.vol('Power'); if (!v || !A.ctx) return; var c = A.ctx; when = when || c.currentTime;
+  var g = out(rel, 1, when), e = c.createGain(); e.connect(g); env(e, when, 0.04, v, 0.6);
+  osc('sine', 130, when, 0.65, e, 42); osc('sawtooth', 65, when, 0.5, e, 40).detune.value = 5; noise(when, 0.6, e, 'lowpass', 500, 0.5);
+};
+A.synthStep = function (rel, when, gain, far) {
+  var c = A.ctx; when = when || c.currentTime; var g = out(rel, gain, when, far ? 1800 : 0), e = c.createGain(); e.connect(g);
+  env(e, when, 0.004, 0.8, 0.06); noise(when, 0.08, e, 'bandpass', 900 + Math.random() * 300, 1.2); osc('sine', 120, when, 0.06, e);
+  if (Math.random() < 0.4) { var e3 = c.createGain(); e3.connect(g); env(e3, when + 0.03, 0.003, 0.35, 0.05); osc('sine', 2600 + Math.random() * 900, when + 0.03, 0.06, e3, 3400); } // a squeak
+};
+A.step = function (rel, when, gain, far) {
+  var v = A.vol('Steps'); if (!v || !A.ctx) return; gain = (gain == null ? 1 : gain) * v;
+  if (A.s.stepStyle === 'synth' || !A.buf.step1) A.synthStep(rel, when, gain, far);
+  else A.play('step' + (1 + Math.floor(Math.random() * 4)), { rel: rel, when: when, gain: gain, lp: far ? 2200 : 0, rate: 0.95 + Math.random() * 0.1 });
+};
+A.steps = function (rel0, rel1, when, n, gap, gain, far) { for (var i = 0; i < n; i++) A.step(rel0 + (rel1 - rel0) * (n > 1 ? i / (n - 1) : 1), when + i * gap, gain, far); };
+A.bounce = function (rel, when, gain, far) {
+  var v = A.vol('Bounce'); if (!v) return; if (far && !A.s.cOppBounce) return;
+  A.play('bounce' + (1 + Math.floor(Math.random() * 4)), { rel: rel, when: when, gain: v * (gain == null ? 1 : gain), lp: far ? 1600 : 0, rate: far ? 0.9 : 1 });
+};
+A.racket = function (kind, rel, when, gain, far, power) {
+  var v = A.vol('Racket'); if (!v) return; gain = v * (gain == null ? 1 : gain);
+  var name = kind === 'backhand' ? (Math.random() < 0.5 ? 'hit3' : 'hit4') : (Math.random() < 0.5 ? 'hit1' : 'hit2');
+  A.play(name, { rel: rel, when: when, gain: gain, lp: far ? 2000 : 0, rate: 0.96 + Math.random() * 0.08 });
+  if (power > 0.7) A.play('power', { rel: rel, when: when, gain: gain * 0.8 * power, lp: far ? 1800 : 0 });
+};
+A.swishMiss = function (rel) { var v = A.vol('Racket'); if (v) A.play('swing', { rel: rel, gain: v * 0.7 }); };
+A.orient = function (rel, when) {
+  var v = A.vol('Orient'); if (!v || !A.ctx) return; var c = A.ctx; when = when || c.currentTime; var g = out(rel, 1, when), e = c.createGain(); e.connect(g);
+  env(e, when, 0.01, v * 0.6, 0.18); osc('sine', 330, when, 0.2, e); osc('sine', 495, when, 0.2, e);
+};
+/* incoming ball whoosh from t0 (audio time) to t1, panning rel0 -> rel1, power 0..1 makes it more solid */
+A.whoosh = function (rel0, rel1, t0, t1, power, away) {
+  var v = A.vol('Whoosh'); if (!v || !A.ctx) return null; var c = A.ctx, st = A.s.whooshStyle, h = { stop: function () {} };
+  if (st === 'air' || st === 'both') {
+    var g = c.createGain(), f = c.createBiquadFilter(), sh = c.createBiquadFilter(), p = c.createStereoPanner ? c.createStereoPanner() : null;
+    f.type = 'bandpass'; f.Q.value = 0.9; sh.type = 'lowshelf'; sh.frequency.value = 220; sh.gain.value = 4 + 10 * power;
+    var n = c.createBufferSource(); n.buffer = A.noise; n.loop = true; n.connect(f); f.connect(sh); sh.connect(g);
+    if (p) { g.connect(p); p.connect(A.master); p.pan.setValueAtTime(A.pan(rel0), t0); p.pan.linearRampToValueAtTime(A.pan(rel1), t1); } else g.connect(A.master);
+    var lo = away ? 1400 : 450, hi = away ? 500 : 1500 - 300 * power, gl = away ? 0.35 : 0.02, gh = away ? 0.005 : 0.9;
+    f.frequency.setValueAtTime(lo, t0); f.frequency.exponentialRampToValueAtTime(hi, t1);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(Math.max(0.001, gl * v), t0 + 0.08); g.gain.exponentialRampToValueAtTime(Math.max(0.001, gh * v * (0.7 + 0.5 * power)), t1); g.gain.exponentialRampToValueAtTime(0.0001, t1 + 0.12);
+    n.start(t0); n.stop(t1 + 0.2);
+    if (power > 0.55 && !away) { var sub = c.createGain(); sub.connect(p || A.master); sub.gain.setValueAtTime(0.0001, t0); sub.gain.exponentialRampToValueAtTime(v * 0.5 * power, t1); sub.gain.exponentialRampToValueAtTime(0.0001, t1 + 0.1); osc('sine', 70, t0, t1 - t0 + 0.1, sub, 95); }
+    h.stop = function () { try { g.gain.cancelScheduledValues(c.currentTime); g.gain.setValueAtTime(0.0001, c.currentTime); n.stop(); } catch (e) {} };
+  }
+  if ((st === 'recorded' || st === 'both') && !away && A.buf.whoosh) A.play('whoosh', { rel: rel1, when: Math.max(t0, t1 - 1.0), gain: v * (0.5 + 0.5 * power), rate: 1.3 });
+  return h;
+};
+/* crowd */
+A.updateCrowd = function () {
+  if (!A.ctx) return; var s = A.s, c = A.ctx;
+  var want = s.crowd === 'club' ? 'club' : s.crowd === 'stadium' ? 'venue' : null;
+  if (A.bed && A.bed.name !== want) { try { A.bed.src.stop(); } catch (e) {} A.bed = null; }
+  if (!want || !A.buf[want]) return;
+  if (!A.bed) { var h = A.play(want, { loop: true, gain: 0.0001 }); if (!h) return; h.name = want; A.bed = h; if (want === 'venue' && A.buf.stadium) { var h2 = A.play('stadium', { loop: true, gain: 0.0001 }); A.bed.extra = h2; } }
+  A.hush(A.hushed);
+};
+A.hush = function (on) {
+  A.hushed = on; if (!A.bed || !A.ctx) return; var s = A.s, c = A.ctx, v = s.vCrowd * (on && s.crowdHush ? 0.3 : 1) * (s.crowd === 'stadium' ? 1.0 : 0.8);
+  A.bed.gain.gain.setTargetAtTime(Math.max(0.0001, v), c.currentTime, 0.4);
+  if (A.bed.extra) A.bed.extra.gain.gain.setTargetAtTime(Math.max(0.0001, v * 0.35), c.currentTime, 0.4);
+};
+A.stopCrowd = function () { if (A.bed) { try { A.bed.src.stop(); if (A.bed.extra) A.bed.extra.src.stop(); } catch (e) {} A.bed = null; } };
+A.react = function (kind) {
+  var s = A.s; if (s.crowd === 'off' || !s.cCrowdReact || !A.ctx) return; var v = s.vCrowd * 1.6, big = s.crowd === 'stadium', w = A.now() + 0.05;
+  if (kind === 'great') { A.play(big ? 'appltennis' : 'applsmall', { gain: v, when: w }); if (big) A.play('applbig', { gain: v * 0.5, when: w + 0.3 }); }
+  else if (kind === 'applause') A.play(big ? (Math.random() < 0.5 ? 'appltennis' : 'appltennis2') : (Math.random() < 0.5 ? 'applsmall' : 'applsmall2'), { gain: v * 0.8, when: w });
+  else if (kind === 'ooh') A.play('ooh', { gain: v * (big ? 0.9 : 0.5), when: w, offset: Math.random() < 0.5 ? 0 : 3.2 });
+  else if (kind === 'gasp') A.play('gasp', { gain: v * (big ? 0.9 : 0.5), when: w });
+  else if (kind === 'match') { A.play(big ? 'applbig' : 'applsmall', { gain: v, when: w }); A.play(big ? 'appltennis2' : 'applsmall2', { gain: v * 0.8, when: w + 0.5 }); }
+};
+A.netThud = function (rel, when) { if (!A.ctx) return; var c = A.ctx; when = when || c.currentTime; var g = out(rel, 0.6, when, 900), e = c.createGain(); e.connect(g); env(e, when, 0.005, 0.8, 0.25); noise(when, 0.3, e, 'lowpass', 500); osc('sine', 90, when, 0.2, e); };
+if (typeof module !== 'undefined' && module.exports) module.exports = A; else root.TBA = A;
+})(this);
+
+/* Tennis by Ear - speech: speechSynthesis voices for game, umpire, commentary and quick hints, plus an optional ARIA live region. */
+(function (root) {
+'use strict';
+var S = { s: null, voices: [], v: {}, cur: null };
+S.pickVoices = function () {
+  var ss = root.speechSynthesis; if (!ss) return;
+  var all = ss.getVoices() || [], gb = all.filter(function (v) { return /en[-_]GB/i.test(v.lang); }), en = all.filter(function (v) { return /^en/i.test(v.lang); });
+  var pool = gb.length ? gb : en; S.voices = pool;
+  var by = function (re) { return pool.filter(function (v) { return re.test(v.name); })[0]; };
+  S.v.game = by(/Daniel|Arthur|Serena|Kate|Martha/) || pool[0] || null;
+  S.v.umpire = by(/Arthur|Daniel|Oliver/) || pool[1] || S.v.game;
+  S.v.comment = by(/Serena|Kate|Martha|Stephanie|Jamie/) || pool[2] || pool[0] || S.v.game;
+  if (S.v.comment === S.v.umpire && pool.length > 1) S.v.comment = pool.filter(function (v) { return v !== S.v.umpire; })[0];
+  S.v.hint = S.v.game;
+};
+if (root.speechSynthesis) { S.pickVoices(); root.speechSynthesis.onvoiceschanged = S.pickVoices; }
+S.live = function (text) { var el = document.getElementById('live'); if (el) { el.textContent = ''; setTimeout(function () { el.textContent = text; }, 30); } };
+S.stop = function () { try { root.speechSynthesis && root.speechSynthesis.cancel(); } catch (e) {} S.cur = null; };
+S.say = function (text, kind) {
+  kind = kind || 'game'; var s = S.s || { speechOut: 'voice', speechRate: 1 }, ss = root.speechSynthesis;
+  if (!text) return Promise.resolve();
+  if (s.speechOut !== 'voice') S.live(text);
+  var est = 600 + text.length * 65 / (s.speechRate || 1);
+  if (s.speechOut === 'live' || !ss) return new Promise(function (r) { setTimeout(r, kind === 'hint' ? 0 : est); });
+  if (kind === 'hint') {
+    if (ss.speaking && S.cur && S.cur !== 'hint') return Promise.resolve();
+    ss.cancel();
+  }
+  return new Promise(function (res) {
+    var u = new SpeechSynthesisUtterance(text), done = false, fin = function () { if (!done) { done = true; if (S.cur === kind) S.cur = null; res(); } };
+    var v = S.v[kind]; if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+    u.rate = Math.max(0.5, Math.min(2, (s.speechRate || 1) * (kind === 'hint' ? 1.15 : kind === 'comment' ? 1.05 : 1)));
+    u.pitch = kind === 'umpire' ? 0.85 : kind === 'comment' ? 1.1 : 1;
+    u.onend = fin; u.onerror = fin; S.cur = kind;
+    setTimeout(fin, est * 1.8 + 1500);
+    ss.speak(u);
+    if (kind === 'hint') res(); // hints never hold the game up
+  });
+};
+root.TBS = S;
+})(this);
+
+/* Tennis by Ear - phone motion input: swings, experimental side steps, face-down pause. */
+(function (root) {
+'use strict';
+var T = root.TBE;
+var M = { on: false, got: 0, det: null, listeners: [], s: null, lastStep: 0, faceDownSince: 0, faceFired: false, lastRot: 0, raw: null };
+M.permission = function () {
+  var D = root.DeviceMotionEvent;
+  if (D && typeof D.requestPermission === 'function') return D.requestPermission().then(function (r) { return r === 'granted'; }).catch(function () { return false; });
+  return Promise.resolve(!!D);
+};
+M.iOS = function () { return !!(root.DeviceMotionEvent && typeof root.DeviceMotionEvent.requestPermission === 'function') || /iPhone|iPad/.test(navigator.userAgent); };
+M.configure = function (s, thresholdOverride) {
+  M.s = s;
+  M.det = new T.SwingDetector({ threshold: thresholdOverride || T.swingThreshold(s.sens, s.calib), cooldown: 0.45 });
+};
+M.handler = function (e) {
+  var r = e.rotationRate, a = e.acceleration, g = e.accelerationIncludingGravity;
+  if (!r || r.alpha == null) return;
+  M.got++;
+  var t = performance.now() / 1000;
+  var smp = { t: t, rot: [r.beta || 0, r.gamma || 0, r.alpha || 0], acc: a && a.x != null ? [a.x, a.y, a.z] : null };
+  // rot indices: [x (beta), y (gamma), z (alpha)]
+  M.raw = smp; M.gravity = g && g.x != null ? [g.x, g.y, g.z] : null;
+  var mag = T.vlen(smp.rot); if (mag > 60) M.lastRot = t;
+  if (M.det) { var sw = M.det.feed(smp); if (sw) M.emit('swing', sw); }
+  // face-down pause: screen facing the floor and still for 1 s
+  if (M.s && M.s.faceDownPause && M.gravity) {
+    var z = M.gravity[2], down = M.iOS() ? z > 8.3 : z < -8.3;
+    if (down && mag < 40) { if (!M.faceDownSince) M.faceDownSince = t; if (!M.faceFired && t - M.faceDownSince > 1.0) { M.faceFired = true; M.emit('facedown'); } }
+    else { M.faceDownSince = 0; if (!down) M.faceFired = false; }
+  }
+  // experimental side step: sideways jolt with little rotation
+  if (M.s && M.s.stepDetect && smp.acc && t - M.lastRot > 0.4 && t - M.lastStep > 0.6) {
+    var thr = 4.5 + (10 - M.s.sens) * 0.3;
+    if (Math.abs(smp.acc[0]) > thr && Math.abs(smp.acc[0]) > Math.abs(smp.acc[1]) * 1.4) { M.lastStep = t; M.emit('step', smp.acc[0] > 0 ? 'right' : 'left'); }
+    else if (Math.abs(smp.acc[2]) > thr + 1 && Math.abs(smp.acc[2]) > Math.abs(smp.acc[0]) * 1.4) { M.lastStep = t; M.emit('step', smp.acc[2] < 0 ? 'forward' : 'back'); }
+  }
+};
+M.start = function () { if (M.on) return; M.on = true; root.addEventListener('devicemotion', M.handler); };
+M.stop = function () { M.on = false; root.removeEventListener('devicemotion', M.handler); };
+M.onEvent = function (fn) { M.listeners.push(fn); return function () { M.listeners = M.listeners.filter(function (f) { return f !== fn; }); }; };
+M.emit = function (type, data) { M.listeners.slice().forEach(function (f) { try { f(type, data); } catch (e) { console.warn(e); } }); };
+root.TBM = M;
+})(this);
+
+/* Tennis by Ear - camera mode with MediaPipe Pose (tasks-vision). The JS bundle is on this site; wasm and model load from the official CDNs. */
+(function (root) {
+'use strict';
+var T = root.TBE;
+var C = { on: false, lm: null, video: null, stream: null, timer: null, s: null, last: null, lastSeen: 0, seen: false, listeners: [], det: null, hist: [], lane: 0, brightT: 0, dark: false, frames: 0, fpsT: 0, fps: 0 };
+C.WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm';
+C.MODELS = { lite: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task',
+  full: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task' };
+C.onEvent = function (fn) { C.listeners.push(fn); return function () { C.listeners = C.listeners.filter(function (f) { return f !== fn; }); }; };
+C.emit = function (type, data) { C.listeners.slice().forEach(function (f) { try { f(type, data); } catch (e) { console.warn(e); } }); };
+C.configure = function (s) { C.s = s; C.det = new T.CamSwingDetector({ threshold: 2.4 * (1.5 - (s.camSens - 5) * 0.08), minDist: 0.5, cooldown: 0.45 }); };
+function timeout(p, ms, what) { return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej(new Error(what + ' timed out')); }, ms); })]); }
+C.start = function (s) {
+  C.configure(s);
+  if (C.on) return Promise.resolve(true);
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return Promise.reject(new Error('no camera on this browser'));
+  C.emit('status', 'Starting the camera.');
+  return navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false }).then(function (st) {
+    C.stream = st; var v = C.video = document.getElementById('camvideo');
+    v.setAttribute('playsinline', ''); v.muted = true; v.srcObject = st;
+    return v.play();
+  }).then(function () {
+    C.emit('status', 'Camera on. Loading the body tracker, this can take up to 30 seconds the first time.');
+    return timeout(import('./mp/vision_bundle.mjs'), 30000, 'tracker code');
+  }).then(function (mp) {
+    C.mp = mp;
+    return timeout(mp.FilesetResolver.forVisionTasks(C.WASM), 40000, 'tracker engine');
+  }).then(function (fs) {
+    var make = function (delegate) { return C.mp.PoseLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: C.MODELS[s.camModel] || C.MODELS.lite, delegate: delegate }, runningMode: 'VIDEO', numPoses: 1, minPoseDetectionConfidence: 0.5, minTrackingConfidence: 0.5 }); };
+    return timeout(make('GPU').catch(function () { return make('CPU'); }), 45000, 'tracker model');
+  }).then(function (lm) {
+    C.lm = lm; C.on = true; C.lastSeen = performance.now(); C.loop(); C.emit('ready'); return true;
+  }).catch(function (e) { C.stop(); throw e; });
+};
+C.stop = function () {
+  C.on = false; if (C.timer) clearTimeout(C.timer); C.timer = null;
+  if (C.stream) C.stream.getTracks().forEach(function (t) { t.stop(); }); C.stream = null;
+  if (C.video) C.video.srcObject = null;
+};
+C.brightness = function () {
+  try {
+    var cv = C.cv || (C.cv = document.createElement('canvas')); cv.width = 32; cv.height = 24; var x = cv.getContext('2d', { willReadFrequently: true });
+    x.drawImage(C.video, 0, 0, 32, 24); var d = x.getImageData(0, 0, 32, 24).data, sum = 0;
+    for (var i = 0; i < d.length; i += 4) sum += 0.3 * d[i] + 0.59 * d[i + 1] + 0.11 * d[i + 2];
+    return sum / (d.length / 4);
+  } catch (e) { return 128; }
+};
+C.summarise = function (L) {
+  function vis(i) { return L[i] && (L[i].visibility == null ? 1 : L[i].visibility); }
+  var sh = { x: (L[11].x + L[12].x) / 2, y: (L[11].y + L[12].y) / 2 }, hp = { x: (L[23].x + L[24].x) / 2, y: (L[23].y + L[24].y) / 2 };
+  var size = Math.hypot(sh.x - hp.x, sh.y - hp.y);
+  var wr;
+  if (C.s.camHands === 'right') wr = L[16]; else if (C.s.camHands === 'left') wr = L[15]; else wr = { x: (L[15].x + L[16].x) / 2, y: (L[15].y + L[16].y) / 2 };
+  return { hipX: hp.x, hipY: hp.y, size: size, wristRel: (wr.x - sh.x) / Math.max(0.05, size), feet: vis(27) > 0.5 && vis(28) > 0.5, body: vis(11) > 0.5 && vis(23) > 0.5 };
+};
+C.loop = function () {
+  if (!C.on) return;
+  var fps = C.s.camFps || 15, t0 = performance.now();
+  try {
+    if (C.video.readyState >= 2) {
+      var res = C.lm.detectForVideo(C.video, t0), L = res && res.landmarks && res.landmarks[0];
+      C.frames++; if (t0 - C.fpsT > 2000) { C.fps = C.frames * 1000 / (t0 - C.fpsT); C.frames = 0; C.fpsT = t0; }
+      if (L && L.length >= 29) {
+        var m = C.summarise(L); m.t = t0 / 1000; C.last = m;
+        if (!C.seen) { C.seen = true; C.emit('seen', true); }
+        C.lastSeen = t0;
+        C.hist.push(m); while (C.hist.length > 40) C.hist.shift();
+        C.emit('pose', m);
+        var sw = C.det.feed({ t: m.t, x: m.wristRel }); if (sw) C.emit('swing', sw);
+      } else if (C.seen && t0 - C.lastSeen > 1500) { C.seen = false; C.emit('seen', false); }
+      if (t0 - C.brightT > 3000) { C.brightT = t0; var b = C.brightness(), dark = b < 35; if (dark !== C.dark) { C.dark = dark; C.emit('dark', dark); } }
+    }
+  } catch (e) { console.warn(e); }
+  var spent = performance.now() - t0;
+  C.timer = setTimeout(C.loop, Math.max(5, 1000 / fps - spent));
+};
+/* waits until the body is still for ms milliseconds, then resolves with the average pose summary */
+C.stable = function (ms, maxWait) {
+  return new Promise(function (res, rej) {
+    var start = performance.now(), iv = setInterval(function () {
+      var now = performance.now(), h = C.hist.filter(function (m) { return now / 1000 - m.t < ms / 1000; });
+      if (h.length >= 4 && now - start > ms) {
+        var mx = h.map(function (m) { return m.hipX; }), ms2 = h.map(function (m) { return m.size; });
+        var sd = function (a) { var mu = a.reduce(function (x, y) { return x + y; }, 0) / a.length; return { mu: mu, sd: Math.sqrt(a.reduce(function (x, y) { return x + (y - mu) * (y - mu); }, 0) / a.length) }; };
+        var a = sd(mx), b = sd(ms2);
+        if (a.sd < 0.02 && b.sd < 0.02) { clearInterval(iv); res({ hipX: a.mu, size: b.mu }); return; }
+      }
+      if (now - start > (maxWait || 15000)) { clearInterval(iv); rej(new Error('not still')); }
+    }, 150);
+  });
+};
+C.guidance = function (m) {
+  if (!m) return 'I can\'t see you. Stand about two metres in front of the phone.';
+  if (C.dark) return 'It is too dark. Please turn on a light.';
+  if (m.size > 0.42) return 'You are too close. Step back a little.';
+  if (!m.feet) return 'Step back a little, I can\'t see your feet.';
+  if (m.hipX < 0.25) return 'Move a little to your left.';
+  if (m.hipX > 0.75) return 'Move a little to your right.';
+  return 'I can see you.';
+};
+root.TBC = C;
+})(this);
+
+/* Tennis by Ear - game flow in the browser. Uses TBE (logic), TBA (audio), TBS (speech), TBM (motion), TBC (camera). */
+(function (root) {
+'use strict';
+var T = root.TBE, A = root.TBA;
+var G = { log: [], s: null, m: null, phase: 'idle', timers: [], pos: { x: 0, d: 0 }, ball: null, win: null, handled: false, r: T.rng(Date.now() & 0xffffffff), wh: [], oppX: 0.6, lastHit: null, paused: false, onStatus: null, onEnd: null, stats: null };
+function say(t, v) { return root.TBS.say(t, v); }
+function status(t) { if (G.onStatus) G.onStatus(t); }
+G.after = function (ms, fn) { var id = setTimeout(function () { G.timers = G.timers.filter(function (x) { return x !== id; }); fn(); }, Math.max(0, ms)); G.timers.push(id); return id; };
+/* run fn(audioTime) for an exact perf time, 70 ms early so the sound is scheduled precisely */
+G.at = function (perfMs, fn) { return G.after(perfMs - performance.now() - 70, function () { if (A.ctx) fn(A.at(perfMs)); }); };
+G.clear = function () { G.timers.forEach(clearTimeout); G.timers = []; G.wh.forEach(function (h) { h && h.stop(); }); G.wh = []; G.win = null; };
+G.auto = function () { return G.s.mode === 'auto' || G.s.mode === 'autoEasy'; };
+G.oppName = function () { return T.OPPONENTS[G.opp].name; };
+G.names = function () { return ['you', G.oppName().split(' ')[0]]; };
+G.rel = function (x) { return (x - G.pos.x) * 0.8; };
+
+G.start = function (s, opts) {
+  G.s = s; G.clear(); G.paused = false;
+  G.opp = s.opponent === 'random' ? T.oppKeys[Math.floor(G.r() * 4)] : s.opponent;
+  var first = s.serve === 'me' ? 0 : s.serve === 'opponent' ? 1 : (G.r() < 0.5 ? 0 : 1);
+  G.m = T.newMatch(s.match, first);
+  G.pos = { x: 0, d: 0 }; G.oppX = 0.6;
+  A.updateCrowd(); A.hush(false);
+  var O = T.OPPONENTS[G.opp], intro;
+  var fmt = { practice: 'a practice rally, no score', short: 'a short match, first to four games', set: 'a one set match with a tie-break at six all', best3: 'best of three sets' }[s.match];
+  intro = 'Tennis by Ear. You are playing ' + O.name + ', ' + O.style + ', on ' + s.difficulty + '. This is ' + fmt + '. ' + (G.m.server === 0 ? 'You serve first.' : O.name.split(' ')[0] + ' serves first.');
+  if (opts && opts.quickHelp) intro += ' Hold the phone like a racket. Listen for the footsteps and the whoosh, the bounce, then the two taps. Swing on the second tap.';
+  status(intro);
+  return say(intro, 'game').then(function () { G.after(600, G.startPoint); });
+};
+G.serverNow = function () { var s = G.s; if (G.m.format === 'practice') return s.serve === 'me' ? 0 : 1; if (s.serve === 'me') return 0; if (s.serve === 'opponent') return 1; return G.m.server; };
+G.startPoint = function () {
+  if (G.paused) return;
+  G.clear(); G.handled = false; G.m.rally = 0; G.lastHit = null; G.lastBall = null;
+  A.hush(true);
+  if (!G.auto() && G.s.mode === 'lanes') G.pos = { x: 0, d: 0 };
+  if (G.auto()) G.pos = { x: 0, d: 0 };
+  if (G.serverNow() === 0) G.myServe(true); else G.oppServe(true);
+};
+/* ---------- opponent serve ---------- */
+G.oppServe = function (first) {
+  G.phase = 'oppserve';
+  var O = T.OPPONENTS[G.opp], prac = G.m.format === 'practice', side = (G.m.pts[0] + G.m.pts[1]) % 2 === 0 ? 0.6 : -0.6;
+  G.oppX = side;
+  var t = performance.now() + 900;
+  G.at(t, function (w) { A.bounce(G.rel(side), w, 0.45, true); });
+  G.at(t + 550, function (w) { A.bounce(G.rel(side), w, 0.45, true); });
+  var hitT = t + 1500;
+  var fault = !prac && G.r() < (first ? 0.16 : 0.05) * (G.opp === 'ben' ? 1.7 : 1) * (G.s.difficulty === 'easy' ? 0.6 : 1);
+  if (fault) {
+    G.at(hitT, function (w) { A.racket('forehand', G.rel(side), w, 0.6, true, first ? 0.9 : 0.6); G.wh.push(A.whoosh(G.rel(side), 0, w, w + 0.5, 0.6)); });
+    G.at(hitT + 550, function (w) { if (G.r() < 0.5) A.netThud(G.rel(0), w); else A.bounce(G.rel(-side), w, 0.5, true); });
+    G.after(hitT + 900 - performance.now(), function () {
+      if (first) { say('Fault.', 'umpire').then(function () { G.after(500, function () { G.oppServe(false); }); }); }
+      else { G.endPoint(0, { kind: 'doublefault' }); }
+    });
+    return;
+  }
+  var ball = T.oppShot(G.r, G.s, G.opp, { serve: true, second: !first, serveSide: side, serveTo: prac ? (G.r() < 0.5 ? -0.5 : 0.5) : null });
+  if (prac) { ball.power *= 0.8; ball.powerful = false; }
+  G.incoming(ball, hitT, true);
+};
+/* ---------- incoming ball ---------- */
+G.incoming = function (ball, hitT, isServe) {
+  var s = G.s, auto = G.auto(); G.ball = ball; G.lastBall = ball; G.phase = 'incoming'; G.handled = false;
+  var flight = ball.flight * 1000, ideal = hitT + flight, bounceT = hitT + flight * ball.bounceFrac;
+  var leads = T.cueLeads(s), w = T.timingWindow(s), lat = s.latency || 0;
+  // opponent runs to the ball (not on serve)
+  if (!isServe) {
+    var x0 = G.oppX, x1 = ball.fromX, n = Math.abs(x1 - x0) > 0.6 ? 4 : 3;
+    G.at(hitT - 820, function (wt) { A.steps(G.rel(x0), G.rel(x1), wt, n, 0.2, 0.7, true); });
+  }
+  G.oppX = ball.fromX;
+  G.at(hitT, function (wt) { A.racket(ball.shot === 'backhand' ? 'backhand' : 'forehand', G.rel(ball.fromX), wt, 0.7, true, ball.power); });
+  // automatic feet: the game places you
+  var place = null;
+  if (auto) { place = T.autoPlace(ball, s.hand, G.r); }
+  G.after(hitT + 120 - performance.now(), function () {
+    if (place) {
+      var moved = Math.abs(place.x - G.pos.x) > 0.2 || place.d !== G.pos.d, from = G.pos.x;
+      G.pos = { x: place.x, d: place.d };
+      if (moved) A.steps(0, (place.x - from) * 0.4, A.now() + 0.05, 2, 0.14, 0.35, false);
+      if (s.strokeHint) say(T.cap(T.neededStroke(ball, G.pos.x, s.hand)), 'hint');
+      if (s.cPosSpeech && s.mode !== 'autoEasy' && ball.depth !== 'normal' && !s.strokeHint) say(ball.depth === 'deep' ? 'Deep ball' : 'Short ball', 'hint');
+    } else if (s.cPosSpeech) {
+      var lw = ball.lane < 0 ? 'left' : ball.lane > 0 ? 'right' : 'centre';
+      var dw = ball.depth === 'deep' ? ', deep, step back' : ball.depth === 'short' ? ', short ball, move in' : ', to your baseline';
+      if (!(ball.powerful && s.cPower && s.powerSpeech)) say('Coming ' + lw + dw, 'hint');
+    }
+  });
+  if (ball.powerful) G.at(hitT + 60, function (wt) { A.powerWarn(G.rel(ball.fromX), wt); if (s.cPower && s.powerSpeech) say('Deep ball, step back', 'hint'); });
+  // whoosh in two halves so the pan follows you if you move
+  G.at(hitT + 40, function (wt) { G.wh.push(A.whoosh(G.rel(ball.fromX), G.rel((ball.fromX + ball.toX) / 2), wt, wt + (bounceT - hitT - 40) / 1000, ball.power * 0.8)); });
+  G.at(bounceT, function (wt) { A.bounce(G.rel(ball.toX), wt, 1); G.wh.push(A.whoosh(G.rel(ball.toX) * 0.8, G.rel(ball.toX), wt, wt + (ideal - bounceT) / 1000, ball.power)); });
+  G.at(ideal - leads.first * 1000, function (wt) { A.timingCue(1, G.rel(ball.toX), wt); });
+  G.at(ideal - leads.second * 1000, function (wt) { A.timingCue(2, G.rel(ball.toX), wt); });
+  var win = G.win = { open: hitT + 250, ideal: ideal, close: ideal + w.scrappy * 1000 + lat, kind: 'return' };
+  G.after(win.close + 40 - performance.now(), function () { if (G.win === win && !G.handled && G.phase === 'incoming') { G.handled = true; G.resolve(null); } });
+};
+/* ---------- swings from any source: {tPerf, stroke, power, src} ---------- */
+G.swing = function (sw) {
+  if (G.paused) return;
+  var s = G.s, lat = s.latency || 0;
+  if (!G.win || G.handled) { if (G.phase === 'between' || G.phase === 'idle' || G.phase === 'incoming' || G.phase === 'myserve') A.swishMiss(0); return; }
+  if (sw.tPerf < G.win.open) { A.swishMiss(0); return; }
+  var dt = (sw.tPerf - lat - G.win.ideal) / 1000, w = T.timingWindow(s);
+  if (dt < -w.scrappy) { A.swishMiss(0); if (s.missMode === 'strict') { G.handled = true; sw.dt = dt; G.win.kind === 'serve' ? G.serveSwing(sw) : G.resolve(sw); } return; }
+  G.handled = true; sw.dt = dt;
+  if (G.win.kind === 'serve') G.serveSwing(sw); else G.resolve(sw);
+};
+G.resolve = function (sw) {
+  var s = G.s, ball = G.ball, auto = G.auto();
+  G.win = null;
+  var hit = T.judgeHit(ball, sw, G.pos, s, auto);
+  if (!hit.ok) {
+    if (sw) A.swishMiss(G.rel(ball.toX));
+    G.after(350, function () { if (hit.reason !== 'early' && hit.reason !== 'late' || true) A.bounce(G.rel(ball.toX) * 1.2, A.now(), 0.5); });
+    G.after(900, function () { G.endPoint(1, { kind: 'miss', hit: hit, ball: ball }); });
+    return;
+  }
+  G.m.rally++; G.lastHit = hit;
+  A.racket(hit.stroke, G.rel(ball.toX) * 0.5, A.now(), 1, false, hit.power);
+  var my = T.myShot(G.r, hit, s, G.opp); G.lastMy = my;
+  if (s.cOrient) A.orient(0, A.now() + 0.25);
+  var fo = 1250 / Math.max(0.5, s.ballSpeed || 1) * (1.15 - 0.3 * my.power), t = performance.now();
+  G.wh.push(A.whoosh(0, G.rel(my.toX) * 0.7, A.now() + 0.03, A.now() + fo * 0.7 / 1000, my.power, true));
+  if (G.m.format === 'practice' && s.cPosSpeech && G.m.rally % 5 === 0) say(G.m.rally + '', 'hint');
+  if (my.out === 'error') {
+    G.at(t + fo * 0.55, function (w) { if (my.errKind === 'net') A.netThud(0, w); else A.bounce(G.rel(my.toX * 1.4), w, 0.4, true); });
+    G.after(fo * 0.55 + 300, function () { (my.errKind === 'net' ? Promise.resolve() : say('Out!', 'umpire')).then(function () { G.endPoint(1, { kind: 'myerror', hit: hit, my: my }); }); });
+    return;
+  }
+  G.at(t + fo * 0.7, function (w) { A.bounce(G.rel(my.toX), w, 0.45, true); });
+  if (s.autoRecover && s.mode === 'lanes') G.after(450, function () { if (G.pos.x !== 0 || G.pos.d !== 0) { var f = G.pos.x; G.pos = { x: 0, d: 0 }; A.steps(0, -f * 0.4, A.now(), 2, 0.14, 0.3, false); } });
+  if (my.out === 'winner') { G.at(t + fo * 1.05, function (w) { A.bounce(G.rel(my.toX), w, 0.3, true); }); G.after(fo + 500, function () { G.endPoint(0, { kind: 'winner', hit: hit, my: my }); }); return; }
+  if (my.out === 'opperror') {
+    var ox = G.oppX, tx = -my.toX * 0.9;
+    G.at(t + fo - 800, function (w) { A.steps(G.rel(ox), G.rel(tx), w, 3, 0.2, 0.7, true); });
+    G.at(t + fo, function (w) { A.racket('forehand', G.rel(tx), w, 0.6, true, 0.6); });
+    G.at(t + fo + 500, function (w) { if (G.r() < 0.5) A.netThud(G.rel(tx), w); else A.bounce(G.rel(my.toX < 0 ? 1.5 : -1.5), w, 0.5, false); });
+    G.after(fo + 800, function () { G.endPoint(0, { kind: 'opperror', hit: hit, my: my }); });
+    return;
+  }
+  var next = T.oppShot(G.r, s, G.opp, { lastQuality: hit.quality, lastPower: my.power, lastTo: my.toX });
+  G.phase = 'outgoing';
+  G.incoming(next, t + fo, false);
+};
+/* ---------- your serve ---------- */
+G.myServe = function (first) {
+  G.phase = 'myserve'; G.handled = false;
+  var s = G.s, w = T.timingWindow(s), leads = T.cueLeads(s), t = performance.now() + (first ? 1400 : 900);
+  if (first && (G.m.pts[0] + G.m.pts[1]) === 0) say('Your serve.', 'hint');
+  G.at(t, function (wt) { A.bounce(0, wt, 0.8); });
+  G.at(t + 550, function (wt) { A.bounce(0, wt, 0.8); });
+  var toss = t + 1300, ideal = toss + 900;
+  G.at(toss, function (wt) { if (A.buf.swing) A.play('swing', { when: wt, gain: 0.4, rate: 0.6 }); });
+  G.at(ideal - leads.first * 1000, function (wt) { A.timingCue(1, 0, wt); });
+  G.at(ideal - leads.second * 1000, function (wt) { A.timingCue(2, 0, wt); });
+  G.serveFirst = first;
+  var win = G.win = { open: toss + 150, ideal: ideal, close: ideal + w.scrappy * 1000 + (s.latency || 0), kind: 'serve' };
+  G.after(win.close + 40 - performance.now(), function () { if (G.win === win && !G.handled && G.phase === 'myserve') { G.handled = true; G.serveSwing(null); } });
+};
+G.serveSwing = function (sw) {
+  var s = G.s, first = G.serveFirst; G.win = null;
+  var tm = sw ? T.judgeTiming(sw.dt, s) : { grade: 'miss', quality: 0, side: 'late' };
+  var p = s.powerMatters && sw ? (sw.power == null ? 0.6 : sw.power) : 0.65;
+  var pf = { perfect: 0.04, good: 0.12, scrappy: s.missMode === 'forgiving' ? 0.3 : 0.6, miss: 1 }[tm.grade];
+  if (s.powerMatters && p > 0.85) pf *= 1.8; if (!first) pf *= 0.6; if (s.difficulty === 'easy') pf *= 0.6; if (G.m.format === 'practice' && sw) pf = 0;
+  if (sw) A.racket('forehand', 0, A.now(), 1, false, p); else { say(first ? 'No swing. Fault.' : 'No swing. Double fault.', 'umpire'); }
+  var fault = !sw || G.r() < pf;
+  if (fault) {
+    if (sw) { G.after(450, function () { A.netThud(0, A.now()); }); }
+    G.after(900, function () {
+      if (first) (sw ? say('Fault.', 'umpire') : Promise.resolve()).then(function () { G.after(400, function () { G.myServe(false); }); });
+      else (sw ? say('Double fault.', 'umpire') : Promise.resolve()).then(function () { G.endPoint(1, { kind: 'doublefault' }); });
+    });
+    return;
+  }
+  G.m.rally++;
+  var q = tm.quality, fo = 900 / Math.max(0.5, s.ballSpeed || 1), t = performance.now(), toX = G.r() < 0.5 ? -0.8 : 0.8;
+  G.wh.push(A.whoosh(0, G.rel(toX) * 0.6, A.now() + 0.02, A.now() + fo * 0.7 / 1000, p, true));
+  G.at(t + fo * 0.7, function (w) { A.bounce(G.rel(toX), w, 0.45, true); });
+  var ace = G.m.format !== 'practice' && G.r() < q * q * (0.05 + 0.25 * p) * Math.sqrt(T.diff(s).err);
+  var hit = { quality: q, power: p, stroke: 'serve', timing: tm };
+  if (ace) { G.after(fo + 400, function () { G.endPoint(0, { kind: 'ace', hit: hit, my: { out: 'winner', dir: 'line', power: p } }); }); return; }
+  var next = T.oppShot(G.r, s, G.opp, { lastQuality: q * 0.9, lastPower: p, lastTo: toX });
+  G.phase = 'outgoing'; G.incoming(next, t + fo + 250, false);
+};
+/* ---------- end of a point ---------- */
+G.endPoint = function (who, info) {
+  if (G.phase === 'between' || G.phase === 'over') return;
+  G.clear(); G.phase = 'between';
+  G.log.push((who === 0 ? 'you ' : 'opp ') + info.kind + (info.hit && info.hit.reason ? ' ' + info.hit.reason : '') + ' rally ' + G.m.rally); if (G.log.length > 50) G.log.shift();
+  var s = G.s, m = G.m, names = G.names(), r = G.r, lines = [];
+  if (m.rally > m.bestRally) m.bestRally = m.rally;
+  var ev = T.pointWon(m, who, s.serve === 'alternate' ? 'alternate' : 'fixed');
+  A.hush(false);
+  var notable = info.kind === 'winner' || info.kind === 'ace' || (info.hit && info.hit.quality > 0.85) || m.rally >= 8;
+  if (who === 0) A.react(notable ? 'great' : 'applause'); else A.react(info.kind === 'miss' && G.r() < 0.4 ? 'ooh' : 'applause');
+  if (info.kind === 'opperror' && G.r() < 0.4) A.react('gasp');
+  var cm = s.commentary;
+  if (cm !== 'off') {
+    if (who === 0 && s.commentGood && (cm === 'every' || notable)) {
+      if (info.kind === 'ace') lines.push(['Ace! Unreturnable serve.', 'comment']);
+      else if (info.kind === 'doublefault') lines.push([names[1] + ' double faults.', 'comment']);
+      else if (info.my) lines.push([T.commentWin(r, info.my, info.hit, G.oppName()), 'comment']);
+      if (m.rally >= 6) lines.push(['That was a ' + m.rally + ' shot rally.', 'comment']);
+    }
+    if (who === 1 && s.commentLoss && (cm === 'every' || info.kind === 'miss' || info.kind === 'myerror')) {
+      if (info.kind === 'miss' && info.ball) {
+        var why = T.lossReason(info.hit.reason, info.hit, info.ball);
+        if (info.hit.reason === 'early' || info.hit.reason === 'late') why += info.hit.reason === 'early' ? ' Wait for the second tap.' : ' Swing on the second tap.';
+        lines.push([T.describeOpp(info.ball, s.hand) + '. ' + why, 'comment']);
+      } else if (info.kind === 'myerror') {
+        var e = info.my.errKind === 'net' ? 'into the net' : info.my.errKind === 'wide' ? 'wide' : 'long';
+        var tip = info.hit.timing && info.hit.timing.grade !== 'perfect' ? ' You were a little ' + info.hit.timing.side + '.' : '';
+        if (s.powerMatters && info.my.power > 0.85) tip += ' Maybe a touch too hard.';
+        lines.push(['Your ' + (info.hit.stroke || 'shot') + ' went ' + e + '.' + tip, 'comment']);
+      } else if (info.kind === 'doublefault') lines.push(['Double fault.', 'comment']);
+    }
+    if (m.format === 'practice' && who === 1) lines.push(['Rally of ' + m.rally + '. Best ' + m.bestRally + '.', 'comment']);
+  }
+  if (m.format !== 'practice' && (s.umpire === 'every' || ev.game || ev.set || ev.match)) lines.push([T.announce(m, ev, names), 'umpire']);
+  var text = lines.map(function (l) { return l[0]; }).join(' ');
+  status(text || (who === 0 ? 'Point to you.' : 'Point to ' + names[1] + '.'));
+  if (G.onScore) G.onScore();
+  var p = Promise.resolve();
+  if (!lines.length) p = say(who === 0 ? 'Your point.' : 'Point ' + names[1] + '.', 'hint');
+  lines.forEach(function (l) { p = p.then(function () { return say(l[0], l[1]); }); });
+  p.then(function () {
+    if (m.over) { G.matchOver(); return; }
+    G.after(1100, G.startPoint);
+  });
+};
+G.matchOver = function () {
+  G.phase = 'over'; A.react('match');
+  var won = G.m.winner === 0;
+  try { var st = JSON.parse(localStorage.getItem('tbe.v1.stats') || '{}'); st.played = (st.played || 0) + 1; st.won = (st.won || 0) + (won ? 1 : 0); st.bestRally = Math.max(st.bestRally || 0, G.m.bestRally); localStorage.setItem('tbe.v1.stats', JSON.stringify(st)); } catch (e) {}
+  if (G.onEnd) G.onEnd(won);
+};
+G.scoreText = function () { return G.m ? T.fullScore(G.m, G.names()) : 'No match yet.'; };
+G.pause = function () { if (G.paused || !G.m) return; G.paused = true; G.clear(); G.phase = 'paused'; A.hush(false); return say('Paused. ' + G.scoreText() + ' Tap resume to carry on. The point will be replayed.', 'game'); };
+G.resume = function () { if (!G.paused) return; G.paused = false; G.phase = 'between'; root.TBS.stop(); say('Resuming.', 'game').then(function () { G.after(500, G.startPoint); }); };
+G.stop = function () { G.clear(); G.paused = false; G.phase = 'idle'; G.m = null; A.hush(false); };
+/* ---------- moving in lanes mode or camera ---------- */
+G.moveDir = function (dir) {
+  if (!G.s || G.auto()) return;
+  var r = T.move(G.pos, dir, G.s.laneMove);
+  if (r.ignored) return;
+  if (r.blocked) { A.edge('wall', G.pos.x * 0.8); if (G.s.cPosSpeech) say('Edge of the court', 'hint'); return; }
+  var prev = G.pos; G.pos = r.pos;
+  A.step((G.pos.x - prev.x) * 0.5, A.now(), 0.35, false);
+  if (r.edge) A.edge(r.edge, G.pos.x * 0.8, A.now() + 0.08);
+  if (G.s.cOrient) A.orient(G.pos.x * 0.8, A.now() + 0.1);
+  if (G.s.cPosSpeech) say(dir === 'left' || dir === 'right' ? T.laneName(G.pos.x) : T.depthName(G.pos.d), 'hint');
+};
+G.camPose = function (cp) {
+  if (!G.s || G.s.mode !== 'camera' || !cp) return;
+  var prev = G.pos, laneChanged = cp.x !== Math.round(prev.lane == null ? 0 : prev.lane), depthChanged = cp.d !== prev.d;
+  G.pos = { x: T.clamp(cp.rel, -1, 1), d: cp.d, lane: cp.x };
+  if (laneChanged || depthChanged) {
+    var e = T.edgeCue({ x: cp.x, d: cp.d }, { x: prev.lane || 0, d: prev.d });
+    if (e) A.edge(e, cp.x * 0.8);
+    if (G.s.cPosSpeech && G.phase !== 'incoming') say(laneChanged ? T.laneName(cp.x) : T.depthName(cp.d), 'hint');
+  }
+};
+root.TBG = G;
+})(this);
+
+/* Tennis by Ear - menus, settings, calibration, gallery, help, wiring. */
+(function (root) {
+'use strict';
+var T = root.TBE, A = root.TBA, S = root.TBS, M = root.TBM, C = root.TBC, G = root.TBG;
+var $ = function (id) { return document.getElementById(id); };
+var store = root.localStorage;
+var st = T.loadSettings(store);
+S.s = st; A.s = st;
+var act = st; // settings used by the running game (a copy, so Play now never overwrites yours)
+function save() { T.saveSettings(store, st); A.s = act; S.s = act; if (A.ctx) A.updateCrowd(); }
+function setK(k, v) { st[k] = v; st.preset = 'custom'; if (act !== st) act[k] = v; save(); }
+function say(t, k) { return S.say(t, k || 'game'); }
+
+/* ---------- screens ---------- */
+var cur = 's-main', prevScreen = 's-main';
+function show(id) {
+  document.querySelectorAll('main > section').forEach(function (s) { s.hidden = s.id !== id; });
+  if (id !== cur) prevScreen = cur; cur = id;
+  var h = $(id).querySelector('h1,h2'); if (h) setTimeout(function () { h.focus(); }, 50);
+  if (id === 's-main') updateLast();
+}
+var primed = false;
+function silentWav() { var n = 8000, b = new ArrayBuffer(44 + n * 2), v = new DataView(b), w = function (o, t) { for (var i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 16000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  return URL.createObjectURL(new Blob([b], { type: 'audio/wav' })); }
+function unlock() {
+  A.init(act); S.s = act;
+  if (primed) return; primed = true;
+  // iOS: the first speech must start from a tap
+  try { if (root.speechSynthesis) { var u = new SpeechSynthesisUtterance(' '); u.volume = 0; root.speechSynthesis.speak(u); } } catch (e) {}
+  // iOS: a looping silent audio element keeps sound playing even with the ring/silent switch on
+  try { var el = document.createElement('audio'); el.src = silentWav(); el.loop = true; el.setAttribute('playsinline', ''); el.setAttribute('aria-hidden', 'true'); document.body.appendChild(el); var pr = el.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {}
+}
+
+/* ---------- settings schema ---------- */
+var pct = function (v) { return Math.round(v * 100) + ' percent'; };
+var secs = function (v) { return (Math.round(v * 100) / 100) + ' seconds'; };
+var MENUS = [
+ { id: 'control', title: 'Control mode', items: [
+  { k: 'mode', t: 'choice', label: 'How you play', opts: [['auto', 'Automatic feet. The game moves you, you swing, and the phone detects forehand or backhand'], ['autoEasy', 'Automatic feet, and the game chooses the stroke. Easiest: just time your swing'], ['lanes', 'Audio lanes, no camera. You move left and right across 3 lanes, and forward and back'], ['camera', 'Camera. Prop the phone up; it watches your feet and your empty-hand swing']] },
+  { k: 'strokeSource', t: 'choice', label: 'Forehand or backhand', opts: [['detect', 'Detect it from my swing'], ['game', 'Let the game choose']] },
+  { k: 'hand', t: 'choice', label: 'Playing hand', opts: [['right', 'Right-handed'], ['left', 'Left-handed']] },
+  { k: 'strokeHint', t: 'toggle', label: 'Say forehand or backhand as the ball comes (automatic feet)' },
+  { k: 'laneMove', t: 'choice', label: 'Movement in lanes mode', opts: [['both', 'Left, right, forward and back'], ['lr', 'Left and right only; depth is automatic'], ['fb', 'Forward and back only; lanes are automatic']] },
+  { k: 'autoRecover', t: 'toggle', label: 'Lanes mode: walk me back to the centre after each shot' },
+  { k: 'stepDetect', t: 'toggle', label: 'Experimental: move lanes by stepping while holding the phone', help: 'Off by default. A sideways jolt of the phone moves you a lane. It may be unreliable.' },
+  { k: 'tapSwing', t: 'toggle', label: 'Show the big Swing button (tap to hit)' },
+  { k: 'faceDownPause', t: 'toggle', label: 'Pause when I put the phone face down' }
+ ] },
+ { id: 'swing', title: 'Swing and timing', items: [
+  { k: 'sens', t: 'range', label: 'Swing sensitivity', min: 1, max: 10, step: 1, fmt: function (v) { return v + ' out of 10' + (v > 7 ? ', very sensitive' : v < 3 ? ', needs a big swing' : ''); }, help: 'Higher picks up smaller swings. Lower ignores small movements.' },
+  { k: 'powerMatters', t: 'toggle', label: 'Swing power changes the shot (harder swing, deeper and faster ball)' },
+  { k: 'missMode', t: 'choice', label: 'Early or late swings', opts: [['forgiving', 'Forgiving: a near miss still goes back softly'], ['strict', 'Strict: early or late is a miss']] },
+  { k: 'wrongStroke', t: 'choice', label: 'If you play the wrong stroke', opts: [['allow', 'Allow it'], ['weak', 'It becomes a weak shot'], ['miss', 'It is a miss']] },
+  { k: 'timingScale', t: 'range', label: 'Timing generosity', min: 0.6, max: 2, step: 0.05, fmt: function (v) { return Math.round(v * 100) + ' percent'; }, help: '100 percent is normal for the level. Higher gives a wider window to hit.' },
+  { k: 'ballSpeed', t: 'range', label: 'Ball speed', min: 0.6, max: 1.4, step: 0.05, fmt: pct },
+  { k: 'cTiming', t: 'toggle', label: 'Timing help: two taps before the hit' },
+  { k: 'timingStyle', t: 'choice', label: 'Timing tap sound', opts: [['wood', 'Rich wooden taps'], ['deep', 'Deep tones'], ['racket', 'Racket string taps'], ['soft', 'Soft beeps']] },
+  { k: 'vTiming', t: 'range', label: 'Timing taps volume', min: 0, max: 1, step: 0.05, fmt: pct },
+  { k: 'cue1Lead', t: 'range', label: 'First tap, how long before the hit', min: 0.3, max: 1, step: 0.05, fmt: secs },
+  { k: 'cue2Lead', t: 'range', label: 'Second tap, how long before the hit. Zero means automatic for the level', min: 0, max: 0.5, step: 0.01, fmt: function (v) { return v === 0 ? 'automatic' : secs(v); } },
+  { k: 'latency', t: 'range', label: 'Speaker delay compensation', min: 0, max: 450, step: 10, fmt: function (v) { return v + ' milliseconds'; }, help: 'Bluetooth speakers play sound late. Use the delay test in Calibration to set this.' }
+ ] },
+ { id: 'sounds', title: 'Sounds', items: [
+  { k: 'cSteps', t: 'toggle', label: 'Opponent footsteps, left or right of you' }, { k: 'vSteps', t: 'range', label: 'Footsteps volume', min: 0, max: 1, step: 0.05, fmt: pct },
+  { k: 'stepStyle', t: 'choice', label: 'Footstep sound', opts: [['real', 'Real recorded tennis shoes'], ['synth', 'Synthesised court steps with squeaks']] },
+  { k: 'cWhoosh', t: 'toggle', label: 'Incoming ball whoosh' }, { k: 'vWhoosh', t: 'range', label: 'Whoosh volume', min: 0, max: 1, step: 0.05, fmt: pct },
+  { k: 'whooshStyle', t: 'choice', label: 'Whoosh style', opts: [['air', 'Rushing air that grows'], ['recorded', 'Recorded swoosh near the end'], ['both', 'Both']] },
+  { k: 'cBounce', t: 'toggle', label: 'Ball bounce on your side' }, { k: 'cOppBounce', t: 'toggle', label: 'Ball bounce on the far side' }, { k: 'vBounce', t: 'range', label: 'Bounce volume', min: 0, max: 1, step: 0.05, fmt: pct },
+  { k: 'cRacket', t: 'toggle', label: 'Racket hits' }, { k: 'vRacket', t: 'range', label: 'Racket volume', min: 0, max: 1, step: 0.05, fmt: pct },
+  { k: 'cEdges', t: 'toggle', label: 'Court edge rumbles: one near a line, two at a corner' }, { k: 'vEdges', t: 'range', label: 'Rumble volume', min: 0, max: 1, step: 0.05, fmt: pct },
+  { k: 'cPower', t: 'toggle', label: 'Power shot warning, a deep boom' }, { k: 'powerSpeech', t: 'toggle', label: 'Also say: deep ball, step back' }, { k: 'vPower', t: 'range', label: 'Power warning volume', min: 0, max: 1, step: 0.05, fmt: pct },
+  { k: 'cPosSpeech', t: 'toggle', label: 'Spoken position and ball cues, like left lane, short ball, move in' },
+  { k: 'cOrient', t: 'toggle', label: 'Orientation tone after you move or hit (off by default)' }, { k: 'vOrient', t: 'range', label: 'Orientation tone volume', min: 0, max: 1, step: 0.05, fmt: pct },
+  { k: 'stereoWidth', t: 'range', label: 'Stereo width', min: 0, max: 1, step: 0.05, fmt: pct },
+  { k: 'mono', t: 'toggle', label: 'Mono, for one speaker' }, { k: 'swapLR', t: 'toggle', label: 'Swap left and right speakers' }
+ ] },
+ { id: 'speech', title: 'Commentary and umpire', items: [
+  { k: 'commentary', t: 'choice', label: 'Commentary', opts: [['every', 'After every point'], ['notable', 'Only notable points, and how you lost a point'], ['off', 'Off']] },
+  { k: 'commentGood', t: 'toggle', label: 'Describe my great shots' }, { k: 'commentLoss', t: 'toggle', label: 'Tell me how my opponent beat me' },
+  { k: 'umpire', t: 'choice', label: 'Umpire score calls', opts: [['every', 'After every point'], ['request', 'Only games and sets; points when I press Score']] },
+  { k: 'speechRate', t: 'range', label: 'Speech speed', min: 0.6, max: 1.6, step: 0.05, fmt: pct },
+  { k: 'speechOut', t: 'choice', label: 'Speech output', opts: [['voice', 'Game voices (recommended with VoiceOver)'], ['live', 'VoiceOver reads it instead'], ['both', 'Both']] }
+ ] },
+ { id: 'opp', title: 'Opponent and difficulty', items: [
+  { k: 'opponent', t: 'choice', label: 'Opponent', opts: T.oppKeys.map(function (k) { var o = T.OPPONENTS[k]; return [k, o.name + ': ' + o.desc]; }).concat([['random', 'A random opponent each match']]) },
+  { k: 'difficulty', t: 'choice', label: 'Difficulty', opts: [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard'], ['pro', 'Pro']] }
+ ] },
+ { id: 'match', title: 'Match length and serving', items: [
+  { k: 'match', t: 'choice', label: 'Match', opts: [['practice', 'Practice rally, endless, with a rally counter'], ['short', 'Short match: first to 4 games'], ['set', 'One set with a tie-break'], ['best3', 'Best of three sets with tie-breaks']] },
+  { k: 'serve', t: 'choice', label: 'Who serves', opts: [['opponent', 'The opponent always serves; you return'], ['alternate', 'Take turns each game, like real tennis'], ['me', 'I always serve']] }
+ ] },
+ { id: 'crowd', title: 'Crowd', items: [
+  { k: 'crowd', t: 'choice', label: 'Crowd', opts: [['off', 'Off'], ['club', 'Quiet club'], ['stadium', 'Big stadium']] },
+  { k: 'vCrowd', t: 'range', label: 'Crowd volume', min: 0, max: 1, step: 0.05, fmt: pct },
+  { k: 'crowdHush', t: 'toggle', label: 'Crowd goes quiet during points' }, { k: 'cCrowdReact', t: 'toggle', label: 'Crowd reacts: applause, ooh, gasps' }
+ ] },
+ { id: 'camera', title: 'Camera', items: [
+  { k: 'camFps', t: 'choice', label: 'Camera frame rate', opts: [['30', '30 per second, smoothest, most battery'], ['15', '15 per second, recommended'], ['10', '10 per second, saves battery']], num: true },
+  { k: 'camModel', t: 'choice', label: 'Body tracker', opts: [['lite', 'Lite, faster'], ['full', 'Full, more accurate but slower and warmer']] },
+  { k: 'camHands', t: 'choice', label: 'Which hands the camera follows for your swing', opts: [['both', 'Both hands together, like a two-handed grip'], ['right', 'Right hand'], ['left', 'Left hand']] },
+  { k: 'camSens', t: 'range', label: 'Camera swing sensitivity', min: 1, max: 10, step: 1, fmt: function (v) { return v + ' out of 10'; } },
+  { k: 'camBattery', t: 'toggle', label: 'Remind me to plug in the phone' },
+  { k: 'camFallback', t: 'choice', label: 'If the camera fails, switch to', opts: [['auto', 'Automatic feet, swing the phone'], ['autoEasy', 'Automatic feet, game chooses the stroke'], ['lanes', 'Audio lanes']] }
+ ] }
+];
+function optLabel(it, v) { var o = (it.opts || []).filter(function (x) { return String(x[0]) === String(v); })[0]; return o ? o[1].split('.')[0].split(':')[0] : String(v); }
+function menuSummary(m) { return m.items.filter(function (i) { return i.t === 'choice'; }).slice(0, 2).map(function (i) { return optLabel(i, st[i.k]); }).join(', '); }
+function renderMenus() {
+  var box = $('st-menus'); box.innerHTML = '';
+  MENUS.forEach(function (m) { var b = document.createElement('button'); b.textContent = m.title + (menuSummary(m) ? '. Now: ' + menuSummary(m) : ''); b.onclick = function () { openSub(m.id); }; box.appendChild(b); });
+  $('st-preset').textContent = 'Current preset: ' + (st.preset === 'simple' ? 'Simple' : st.preset === 'realistic' ? 'Realistic' : 'Custom') + '.';
+}
+var uid = 0;
+function openSub(id) {
+  var m = MENUS.filter(function (x) { return x.id === id; })[0], body = $('sub-body'); body.innerHTML = ''; $('sub-title').textContent = m.title;
+  m.items.forEach(function (it) {
+    var wrap; uid++;
+    if (it.t === 'toggle') {
+      wrap = document.createElement('div'); var lab = document.createElement('label'), cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.setAttribute('role', 'switch'); cb.checked = !!st[it.k]; cb.id = 'f' + uid;
+      cb.onchange = function () { setK(it.k, cb.checked); };
+      lab.appendChild(cb); lab.appendChild(document.createTextNode(it.label)); wrap.appendChild(lab);
+    } else if (it.t === 'choice') {
+      wrap = document.createElement('fieldset'); var lg = document.createElement('legend'); lg.textContent = it.label; wrap.appendChild(lg);
+      it.opts.forEach(function (o) {
+        var l = document.createElement('label'), r = document.createElement('input'); r.type = 'radio'; r.name = 'r' + uid; r.value = o[0];
+        r.checked = String(st[it.k]) === String(o[0]);
+        r.onchange = function () { if (r.checked) setK(it.k, it.num ? Number(o[0]) : o[0]); };
+        l.appendChild(r); l.appendChild(document.createTextNode(o[1])); wrap.appendChild(l);
+      });
+    } else if (it.t === 'range') {
+      wrap = document.createElement('div'); var l2 = document.createElement('label'), rg = document.createElement('input'), out = document.createElement('span');
+      rg.type = 'range'; rg.min = it.min; rg.max = it.max; rg.step = it.step; rg.value = st[it.k]; rg.id = 'f' + uid; l2.htmlFor = rg.id;
+      var upd = function () { var v = Number(rg.value), txt = it.fmt ? it.fmt(v) : String(v); rg.setAttribute('aria-valuetext', txt); out.textContent = ': ' + txt; };
+      rg.oninput = function () { setK(it.k, Number(rg.value)); upd(); };
+      l2.textContent = it.label; l2.appendChild(out); upd(); wrap.appendChild(l2); wrap.appendChild(rg);
+    }
+    if (it.help) { var p = document.createElement('p'); p.className = 'help'; p.textContent = it.help; p.id = 'h' + uid; wrap.appendChild(p); var inp = wrap.querySelector('input'); if (inp) inp.setAttribute('aria-describedby', p.id); }
+    body.appendChild(wrap);
+  });
+  if (id === 'sounds' || id === 'swing') { var b = document.createElement('button'); b.textContent = 'Hear the sound gallery'; b.onclick = function () { unlock(); openGallery(); }; body.appendChild(b); }
+  if (id === 'camera') { var b2 = document.createElement('button'); b2.textContent = 'Go to camera calibration'; b2.onclick = function () { show('s-calib'); }; body.appendChild(b2); }
+  show('s-sub');
+}
+
+/* ---------- playing ---------- */
+var offM = null, offC = null, motionWarned = false, sessionMode = null, wake = null;
+function wakeLock() { try { if (navigator.wakeLock) navigator.wakeLock.request('screen').then(function (w) { wake = w; }).catch(function () {}); } catch (e) {} }
+function swingFromMotion(sw) {
+  var cl = T.classifySwing(sw, act.calib, act.hand), p = T.swingPower(sw, act.calib);
+  if (cur !== 's-game') return;
+  G.swing({ tPerf: sw.t * 1000, stroke: cl.clear || act.difficulty !== 'easy' ? cl.stroke : null, power: p, src: 'motion' });
+}
+function setupGameScreen() {
+  $('g-move').hidden = act.mode !== 'lanes';
+  $('g-swing').hidden = !act.tapSwing;
+  $('g-cam').textContent = '';
+}
+function startGame(quick) {
+  unlock();
+  act = JSON.parse(JSON.stringify(st));
+  if (quick) { T.applyPreset(act, 'simple'); act.mode = 'auto'; }
+  A.s = act; S.s = act; A.updateCrowd();
+  sessionMode = act.mode;
+  setupGameScreen(); show('s-game'); $('g-status').textContent = 'Starting.'; wakeLock();
+  if (offM) offM(); if (offC) offC();
+  var p = Promise.resolve();
+  if (act.mode !== 'camera') {
+    p = M.permission().then(function (ok) {
+      M.configure(act); M.start();
+      offM = M.onEvent(function (type, d) { if (type === 'swing') swingFromMotion(d); else if (type === 'facedown' && cur === 's-game') doPause(); else if (type === 'step' && cur === 's-game') G.moveDir(d); });
+      setTimeout(function () { if (!M.got && !motionWarned && cur === 's-game') { motionWarned = true; say('I can\'t feel the motion sensor. You can swing with the big Swing button, or the space bar on a keyboard.', 'hint'); } }, 3500);
+    });
+  } else {
+    p = startCamera();
+  }
+  p.then(function () { G.start(act, { quickHelp: quick }); });
+}
+function startCamera() {
+  if (act.camBattery) say('The camera uses a lot of battery and the phone may get warm. Plug it in if you can.', 'game');
+  M.configure(act); M.permission().then(function () { M.start(); });
+  offM = M.onEvent(function (type) { if (type === 'facedown' && cur === 's-game') doPause(); });
+  var lastLane = 0;
+  return C.start(act).then(function () {
+    offC = C.onEvent(function (type, d) {
+      if (type === 'pose') { var cp = T.camPosition(d, act.camCalib || C.autoCal, lastLane); if (cp) { lastLane = cp.x; G.camPose(cp); } }
+      else if (type === 'swing') G.swing({ tPerf: d.t * 1000, stroke: T.camStroke(d, act.camCalib, act.hand), power: T.camPower(d, act.camCalib), src: 'camera' });
+      else if (type === 'seen') { $('g-cam').textContent = d ? 'Camera can see you.' : 'Camera cannot see you.'; if (!d) say('I can\'t see you.', 'hint'); }
+      else if (type === 'dark' && d) say('It is too dark for the camera.', 'hint');
+    });
+    $('g-cam').textContent = 'Camera running.';
+    if (!act.camCalib) {
+      return say('No camera calibration yet. Stand in the middle, facing the phone, about two metres away, and keep still.', 'game').then(function () { return C.stable(1500, 20000); }).then(function (p) {
+        C.autoCal = { cx: p.hipX, size: p.size }; return say('Got you. ' + C.guidance(C.last), 'game');
+      }).catch(function () { C.autoCal = { cx: 0.5, size: 0.25 }; return say(C.guidance(C.last) + ' I will start anyway.', 'game'); });
+    }
+  }).catch(function (e) {
+    console.warn('camera failed', e);
+    act.mode = act.camFallback || 'auto'; setupGameScreen();
+    return say('The camera did not start, ' + (e && e.name === 'NotAllowedError' ? 'because camera access was not allowed' : 'or the body tracker could not load') + '. Switching to ' + optLabel(MENUS[0].items[0], act.mode) + ' for this match.', 'game').then(function () {
+      return M.permission().then(function () { M.configure(act); M.start(); offM = M.onEvent(function (type, d) { if (type === 'swing') swingFromMotion(d); else if (type === 'facedown' && cur === 's-game') doPause(); }); });
+    });
+  });
+}
+function doPause() { if (!G.m) return; G.pause(); show('s-paused'); }
+function quit() { G.stop(); act = st; A.s = st; S.s = st; C.stop(); S.stop(); if (offC) offC(); offC = null; if (wake) { try { wake.release(); } catch (e) {} wake = null; } show('s-main'); }
+G.onStatus = function (t) { $('g-status').textContent = t; };
+G.onEnd = function (won) { $('o-text').textContent = (won ? 'You won! ' : 'You lost this one. ') + G.scoreText(); show('s-over'); say((won ? 'You won the match!' : 'Match over.') + ' Play again, or main menu.', 'game'); };
+function updateLast() { try { var x = JSON.parse(store.getItem('tbe.v1.stats') || '{}'); $('lastinfo').textContent = x.played ? 'Matches played ' + x.played + ', won ' + x.won + '. Best rally ' + (x.bestRally || 0) + ' shots.' : ''; } catch (e) {} }
+
+/* ---------- calibration ---------- */
+var abort = false;
+function cs(t) { $('c-status').textContent = t; return say(t, 'game'); }
+function calState() {
+  var c = st.calib, k = st.camCalib;
+  $('c-state').textContent = (c ? 'Swing calibration saved from ' + c.n + ' swings, ' + Math.round((c.score || 0) * 100) + ' percent recognised. ' : 'Swing not calibrated yet; using a first guess. ') + (k ? 'Camera calibrated. ' : 'Camera not calibrated. ') + 'Speaker delay ' + st.latency + ' milliseconds.';
+}
+function waitSwing(ms) {
+  return new Promise(function (res) {
+    var off = M.onEvent(function (type, d) { if (type === 'swing') { off(); clearTimeout(to); res(d); } });
+    var tapH = function () { off(); clearTimeout(to); $('c-tap').removeEventListener('click', tapH); res(null); };
+    var to = setTimeout(function () { off(); res(undefined); }, ms);
+  });
+}
+function calibPhone(adv) {
+  unlock(); abort = false;
+  return M.permission().then(function (ok) {
+    if (!ok) return cs('Motion access was not allowed. On the iPhone, allow Motion and Orientation access for Safari in Settings, Safari, then try again.');
+    M.configure(st, 110); M.start();
+    var plan = [], samples = [], neutral = null, n = adv ? 5 : 3;
+    for (var i = 1; i <= n; i++) plan.push({ stroke: 'forehand', i: i, n: n });
+    for (var j = 1; j <= n; j++) plan.push({ stroke: 'backhand', i: j, n: n });
+    if (adv) { for (var g = 1; g <= 3; g++) plan.push({ stroke: 'forehand', kind: 'gentle', i: g, n: 3 }); for (var h = 1; h <= 3; h++) plan.push({ stroke: 'forehand', kind: 'hard', i: h, n: 3 }); }
+    var p = cs('Swing calibration. Hold the phone in your playing hand like a racket handle, the way you will play. ' + (st.hand === 'left' ? 'Left-handed. ' : 'Right-handed. ') + 'After each tone, make one swing.');
+    if (adv) p = p.then(function () { return cs('First, hold the phone still in your ready position for two seconds.'); }).then(function () {
+      return new Promise(function (r) { var acc = [0, 0, 0], c = 0, iv = setInterval(function () { if (M.gravity) { acc[0] += M.gravity[0]; acc[1] += M.gravity[1]; acc[2] += M.gravity[2]; c++; } }, 50); setTimeout(function () { clearInterval(iv); neutral = c ? [acc[0] / c, acc[1] / c, acc[2] / c] : null; r(); }, 2000); });
+    }).then(function () { return cs(neutral ? 'Got your ready position.' : 'I could not read the ready position, carrying on.'); });
+    plan.forEach(function (step) {
+      p = p.then(function attempt(tries) {
+        if (abort) throw new Error('stopped');
+        tries = tries || 0;
+        var word = (step.kind === 'gentle' ? 'Gentle forehand ' : step.kind === 'hard' ? 'Hard forehand ' : T.cap(step.stroke) + ' ') + step.i + ' of ' + step.n + '.';
+        return cs(word).then(function () { A.timingCue(2, 0, A.now(), 'deep'); return waitSwing(7000); }).then(function (sw) {
+          if (abort) throw new Error('stopped');
+          if (!sw) { if (tries < 2) return cs('I did not feel a swing. Try a bit faster.').then(function () { return attempt(tries + 1); }); return cs('Skipping that one.'); }
+          A.racket(step.stroke, 0, A.now(), 0.8, false, 0.5); samples.push({ stroke: step.stroke, kind: step.kind, sw: sw });
+        });
+      });
+    });
+    return p.then(function () {
+      var c = T.buildCalibration(samples, neutral, st.hand);
+      M.configure(st);
+      if (!c) return cs('Your forehands and backhands felt the same to the phone, so I did not save this. Try a clearer swing across your body, or choose Let the game choose, in Control mode.');
+      st.calib = c; save(); M.configure(st); calState();
+      var msg = 'Calibration saved. I recognised ' + Math.round(c.score * c.n) + ' of ' + c.n + ' swings correctly.';
+      if (c.score < 0.8) msg += ' That is not great. You could try again, or let the game choose the stroke.';
+      return cs(msg);
+    });
+  }).catch(function (e) { M.configure(st); if (e.message === 'stopped') return cs('Stopped.'); console.warn(e); return cs('Calibration stopped because of an error.'); });
+}
+var testOff = null;
+function swingTest() {
+  unlock(); abort = false;
+  M.permission().then(function (ok) {
+    if (!ok) return cs('Motion access was not allowed.');
+    M.configure(st); M.start(); if (testOff) testOff();
+    cs('Swing test. Swing any time. I will say forehand or backhand and the power. Press Stop the current test when done.');
+    testOff = M.onEvent(function (type, sw) { if (type !== 'swing') return; var cl = T.classifySwing(sw, st.calib, st.hand), pw = T.swingPower(sw, st.calib); A.racket(cl.stroke, 0, A.now(), 0.8, false, pw); $('c-status').textContent = cl.stroke + ', power ' + Math.round(pw * 100); S.say(T.cap(cl.stroke) + (cl.clear ? '' : ', not sure') + ', power ' + Math.round(pw * 100), 'hint'); });
+  });
+}
+function delayTest() {
+  unlock(); abort = false;
+  M.permission().then(function () {
+    M.configure(st); M.start();
+    var ticks = [], hits = [], off = M.onEvent(function (type, sw) { if (type === 'swing') hits.push(sw.t * 1000); });
+    var tap = function () { hits.push(performance.now()); }; $('c-tap').addEventListener('click', tap);
+    cs('Delay test. You will hear 8 deep ticks, one a second, through your speaker. Swing the phone, or tap the big button, exactly on each tick.').then(function () {
+      var t0 = performance.now() + 1500;
+      for (var i = 0; i < 8; i++) { ticks.push(t0 + i * 1000); A.timingCue(2, 0, A.at(t0 + i * 1000), 'deep'); }
+      setTimeout(function () {
+        off(); $('c-tap').removeEventListener('click', tap);
+        if (abort) return;
+        var offs = [];
+        ticks.slice(2).forEach(function (tk) { var best = null; hits.forEach(function (h) { if (Math.abs(h - tk) < 500 && (best == null || Math.abs(h - tk) < Math.abs(best))) best = h - tk; }); if (best != null) offs.push(best); });
+        if (offs.length < 3) { cs('I only caught ' + offs.length + ' swings on the ticks, so I kept the delay at ' + st.latency + ' milliseconds.'); return; }
+        offs.sort(function (a, b) { return a - b; }); var med = offs[Math.floor(offs.length / 2)];
+        st.latency = Math.max(0, Math.min(450, Math.round(med / 10) * 10)); save(); calState();
+        cs('Done. You were ' + Math.round(med) + ' milliseconds ' + (med >= 0 ? 'after' : 'before') + ' the ticks. Speaker delay set to ' + st.latency + ' milliseconds.');
+      }, 1500 + 8000 + 700);
+    });
+  });
+}
+function camCalib(adv) {
+  unlock(); abort = false;
+  var cal = {}, guideIv = null;
+  var stable = function (what) { return cs(what).then(function () { guideIv = setInterval(function () { var g = C.guidance(C.last); if (g !== 'I can see you.') S.say(g, 'hint'); }, 4000); return C.stable(1500, 25000); }).then(function (p) { clearInterval(guideIv); if (abort) throw new Error('stopped'); A.timingCue(2, 0, A.now(), 'wood'); return p; }, function (e) { clearInterval(guideIv); throw e; }); };
+  var swings = function (stroke, n, list) {
+    var p = Promise.resolve();
+    for (var i = 1; i <= n; i++) (function (i) { p = p.then(function () { return cs(T.cap(stroke) + ' ' + i + ' of ' + n + ', with empty hands in your racket grip.'); }).then(function () {
+      return new Promise(function (res) { var off = C.onEvent(function (t, d) { if (t === 'swing') { off(); clearTimeout(to); A.racket(stroke, 0, A.now(), 0.7, false, 0.5); list.push({ stroke: stroke, ev: d }); res(); } }); var to = setTimeout(function () { off(); S.say('I did not see that one.', 'hint'); res(); }, 7000); });
+    }); })(i);
+    return p;
+  };
+  cs('Camera calibration. Prop the phone up at about waist height, screen facing you, about two metres away, with a light on.' + (st.camBattery ? ' Plug the phone in if you can.' : ''));
+  return C.start(st).then(function () {
+    return stable('Stand in the middle of where you want to play, facing the phone, and keep still.');
+  }).then(function (p) { cal.cx = p.hipX; cal.size = p.size; return stable('Good. Now take one big step to your left, and keep still.'); })
+    .then(function (p) { cal.left = p.hipX; return stable('Now step back to the middle, then one big step to your right, and keep still.'); })
+    .then(function (p) {
+      cal.right = p.hipX;
+      if (!adv) return null;
+      return stable('Back to the middle, then step forward towards the phone, and keep still.').then(function (q) { cal.fwdRatio = q.size / cal.size; return stable('Now step back past the middle, away from the phone, and keep still.'); }).then(function (q) { cal.backRatio = q.size / cal.size; return cs('Back to the middle.'); });
+    }).then(function () {
+      var list = [];
+      return swings('forehand', adv ? 3 : 2, list).then(function () { return adv ? swings('backhand', 3, list) : null; }).then(function () { return list; });
+    }).then(function (list) {
+      var fh = list.filter(function (x) { return x.stroke === 'forehand'; }), bh = list.filter(function (x) { return x.stroke === 'backhand'; });
+      var sum = fh.reduce(function (a, x) { return a + x.ev.dir; }, 0) - bh.reduce(function (a, x) { return a + x.ev.dir; }, 0);
+      cal.fhDir = sum === 0 ? (st.hand === 'left' ? -1 : 1) : (sum > 0 ? 1 : -1);
+      var sp = list.map(function (x) { return x.ev.speed; }).sort(function (a, b) { return a - b; });
+      if (sp.length >= 2) { cal.gentle = sp[0] * 0.8; cal.hard = sp[sp.length - 1] * 1.1; }
+      if (Math.abs(cal.left - cal.cx) < 0.03 || Math.abs(cal.right - cal.cx) < 0.03) return cs('Your left and right steps were too small for me to see. Try again with bigger steps.');
+      st.camCalib = cal; save(); calState();
+      return cs('Camera calibration saved. ' + (list.length ? 'I saw ' + list.length + ' swings.' : 'I did not see your swings; I will use a first guess.'));
+    }).catch(function (e) { clearInterval(guideIv); if (e && e.message === 'stopped') return cs('Stopped.'); return cs('Camera calibration did not finish. ' + (e && e.name === 'NotAllowedError' ? 'Camera access was not allowed.' : (e && e.message === 'not still' ? C.guidance(C.last) : 'The camera or body tracker did not start.'))); })
+    .then(function () { if (cur !== 's-game') C.stop(); });
+}
+function camCheck() {
+  unlock(); abort = false;
+  cs('Starting the camera check.');
+  C.start(st).then(function () {
+    var n = 0, iv = setInterval(function () { n++; var g = C.guidance(C.last && performance.now() / 1000 - C.last.t < 1.5 ? C.last : null); cs(g + ' Camera speed ' + Math.round(C.fps) + ' frames a second.'); if (n >= 5 || abort) { clearInterval(iv); C.stop(); } }, 3500);
+  }).catch(function (e) { cs('The camera did not start. ' + (e && e.name === 'NotAllowedError' ? 'Camera access was not allowed.' : String(e && e.message || e))); });
+}
+
+/* ---------- sound gallery ---------- */
+var GAL = [
+ ['Opponent footsteps on your left', 'The opponent is running to hit from your left side.', function (w) { A.steps(-0.9, -0.6, w, 4, 0.2, 0.8, true); }],
+ ['Opponent footsteps on your right', 'The opponent is running to hit from your right side.', function (w) { A.steps(0.9, 0.6, w, 4, 0.2, 0.8, true); }],
+ ['Opponent hits the ball', 'A racket hit at the far end.', function (w) { A.racket('forehand', 0.5, w, 0.7, true, 0.5); }],
+ ['Incoming ball, left to right', 'The whoosh grows louder as the ball comes to you.', function (w) { A.whoosh(-0.7, 0.6, w, w + 1.6, 0.4); }],
+ ['Incoming power shot', 'A heavier, more solid whoosh for a hard ball.', function (w) { A.whoosh(0.6, -0.4, w, w + 1.2, 1); }],
+ ['Bounce on your side', 'The ball has bounced in front of you. Get ready.', function (w) { A.bounce(0.4, w, 1); }],
+ ['Bounce on the far side', 'Your shot landed in the opponent\'s court.', function (w) { A.bounce(-0.3, w, 0.45, true); }],
+ ['Timing taps', 'First tap, get ready. Second tap, swing now.', function (w) { A.timingCue(1, 0, w); A.timingCue(2, 0, w + 0.4); }],
+ ['Timing taps: all four styles', 'Wooden, deep, racket string, then soft beeps.', function (w) { ['wood', 'deep', 'racket', 'soft'].forEach(function (s, i) { A.timingCue(1, 0, w + i * 1.2, s); A.timingCue(2, 0, w + i * 1.2 + 0.4, s); }); }],
+ ['One rumble', 'You are near a line: the side line, or crossing the baseline.', function (w) { A.edge('line', 0.6, w); }],
+ ['Two rumbles', 'You are in a corner, where the baseline meets the side line.', function (w) { A.edge('corner', -0.6, w); }],
+ ['Three rumbles', 'You cannot move further that way.', function (w) { A.edge('wall', 0.8, w); }],
+ ['Power shot warning', 'A big deep ball is coming: step back.', function (w) { A.powerWarn(0, w); }],
+ ['Your forehand', '', function (w) { A.racket('forehand', 0.3, w, 1, false, 0.4); }],
+ ['Your backhand', '', function (w) { A.racket('backhand', -0.3, w, 1, false, 0.4); }],
+ ['Your power hit', 'A hard swing adds this extra crack.', function (w) { A.racket('forehand', 0.3, w, 1, false, 1); }],
+ ['Swing and miss', 'You swung but missed, or swung when no ball was there.', function (w) { A.play('swing', { when: w, gain: 0.7 }); }],
+ ['Ball into the net', '', function (w) { A.netThud(0, w); }],
+ ['Orientation tone', 'Optional. Plays where you are after you move.', function (w) { A.orient(0, w); }],
+ ['Opponent footsteps, synthesised', 'The other footstep style.', function (w) { for (var i = 0; i < 4; i++) A.synthStep(0.7 - i * 0.1, w + i * 0.2, 0.8, true); }],
+ ['Quiet club crowd', '', function (w) { A.play('club', { when: w, gain: 0.6 }); setTimeout(A.stopGallery, 4000); }],
+ ['Big stadium crowd', '', function (w) { A.play('venue', { when: w, gain: 0.7 }); A.play('stadium', { when: w, gain: 0.25 }); setTimeout(A.stopGallery, 4000); }],
+ ['Club applause', '', function (w) { A.play('applsmall', { when: w, gain: 0.8 }); }],
+ ['Stadium applause from a real tennis match', '', function (w) { A.play('appltennis', { when: w, gain: 0.8 }); }],
+ ['Big cheer', '', function (w) { A.play('applbig', { when: w, gain: 0.7 }); }],
+ ['Crowd ooh', '', function (w) { A.play('ooh', { when: w, gain: 0.8 }); }],
+ ['Crowd gasp', '', function (w) { A.play('gasp', { when: w, gain: 0.8 }); }],
+ ['Umpire voice', 'Fifteen love.', null, 'umpire'],
+ ['Commentator voice', 'What a forehand! Down the line, clean winner.', null, 'comment'],
+ ['A whole incoming ball', 'Footsteps, the hit, the whoosh, the bounce, then the two taps. Swing on the second tap.', 'demo']
+];
+var galSrcs = [];
+A.stopGallery = function () { galSrcs.forEach(function (h) { try { h && h.src && h.src.stop(); } catch (e) {} }); galSrcs = []; };
+function demoBall() {
+  var w = A.now() + 1.2, flight = 2.0;
+  A.steps(0.8, 0.5, w - 0.8, 4, 0.2, 0.8, true); A.racket('forehand', 0.5, w, 0.7, true, 0.6);
+  A.whoosh(0.5, 0.2, w + 0.04, w + flight * 0.72, 0.5); A.bounce(-0.3, w + flight * 0.72, 1); A.whoosh(-0.25, -0.3, w + flight * 0.72, w + flight, 0.6);
+  A.timingCue(1, -0.3, w + flight - 0.5); A.timingCue(2, -0.3, w + flight - 0.2); A.racket('backhand', -0.2, w + flight, 1, false, 0.5);
+}
+function openGallery() {
+  var box = $('gal-list'); box.innerHTML = '';
+  GAL.forEach(function (g) {
+    var b = document.createElement('button'); b.textContent = g[0] + (g[1] ? '. ' + g[1] : '');
+    b.onclick = function () {
+      unlock(); A.stopGallery(); S.stop();
+      if (g[2] === 'demo') { S.say(g[0], 'hint'); demoBall(); return; }
+      if (!g[2]) { S.say(g[1], g[3]); return; }
+      var orig = A.play; A.play = function (n, o) { var h = orig(n, o); galSrcs.push(h); return h; };
+      try { g[2](A.now() + 0.15); } finally { A.play = orig; }
+    };
+    box.appendChild(b);
+  });
+  show('s-gallery');
+}
+
+/* ---------- help and credits ---------- */
+var HELP = [
+ ['The idea', ['You are on the baseline. Your opponent hits the ball to you across the court. You hear it coming and swing the phone like a racket to hit it back.']],
+ ['What you hear when a ball comes', ['Opponent footsteps, on your left or your right, tell you where they are hitting from.', 'The racket hit at the far end.', 'A whoosh that grows louder and moves to where the ball is going. Harder shots sound heavier.', 'The bounce on your side.', 'Two timing taps. The first means get ready, the second means swing now.', 'A deep boom means a powerful deep ball: step back if you are moving yourself.']],
+ ['Swinging', ['Hold the phone firmly like a racket handle, with a wrist strap if you have one. Swing across your body. A forehand swings from your racket side, a backhand from the other side.', 'Calibration teaches the game your forehand and backhand. Quick takes 3 of each. Advanced also learns your gentle and hard swings.', 'If the phone gets forehand and backhand wrong, choose Let the game choose in Control mode.']],
+ ['Control modes', ['Play now uses automatic feet: the game moves you into place, and you only swing.', 'Automatic feet with the game choosing the stroke is the easiest.', 'Audio lanes: you move between left, centre and right lanes and forward or back, using the move buttons, swipes, or the arrow keys on a Bluetooth keyboard. One rumble means you are near a line, two rumbles mean a corner, three mean you cannot go further.', 'Camera: prop the phone up about two metres away, plug it in, and turn a light on. It watches your feet for your position and your empty hands for your swing. If it cannot start, the game switches to an audio mode and tells you.']],
+ ['Buttons and keys', ['The big button at the top of the match screen pauses. You can also put the phone face down to pause.', 'Score tells you the score. Where am I tells you your lane and depth.', 'Keyboard: space to swing, F forehand, B backhand, arrows to move, S score, P or Escape to pause.', 'With VoiceOver on, swipes go to VoiceOver. Use the move buttons, or double tap and hold then swipe to pass a swipe through.']],
+ ['Bluetooth speakers and sound', ['Bluetooth speakers play sound a little late. Run the delay test in Calibration so your timing is judged fairly.', 'The deep rumbles are low sounds: they are clearest on a hi-fi speaker or headphones, and quieter on the phone speaker.', 'If you hear nothing, check the ring and silent switch and the volume.']],
+ ['Scoring', ['Practice rally has no score and counts your rally. The short match is first to 4 games. You can also play one set, or best of three sets, with tie-breaks.']]
+];
+function renderHelp() {
+  var b = $('help-body'); b.innerHTML = '';
+  HELP.forEach(function (h) { var h3 = document.createElement('h3'); h3.textContent = h[0]; b.appendChild(h3); var ul = document.createElement('ul'); h[1].forEach(function (t) { var li = document.createElement('li'); li.textContent = t; ul.appendChild(li); }); b.appendChild(ul); });
+}
+function renderCredits() {
+  var b = $('cred-body'), cr = root.TBE_CREDITS || []; b.innerHTML = '';
+  var p = document.createElement('p'); p.textContent = 'All recordings come from Freesound under Creative Commons Zero (public domain). Credit is not required, but here they are with thanks. Score calls and commentary use your phone\'s speech voices, because no Creative Commons recordings of tennis score calls could be found. The timing taps, rumbles, power boom and synthesised footsteps are made in the app.'; b.appendChild(p);
+  var ul = document.createElement('ul');
+  cr.forEach(function (c) { var li = document.createElement('li'); li.appendChild(document.createTextNode(c.use + ': "' + c.title + '" by ' + c.user + ', ' + c.licence + '. ')); var a = document.createElement('a'); a.href = c.url; a.textContent = 'Freesound page'; a.target = '_blank'; a.rel = 'noopener'; li.appendChild(a); ul.appendChild(li); });
+  b.appendChild(ul);
+  var p2 = document.createElement('p'); p2.textContent = 'Camera body tracking: MediaPipe Pose Landmarker by Google, Apache 2.0 licence. The code of this game belongs to Ahsan Ali.'; b.appendChild(p2);
+}
+
+/* ---------- wiring ---------- */
+function on(id, fn) { var e = $(id); if (e) e.addEventListener('click', fn); }
+on('b-play', function () { startGame(true); });
+on('b-playmine', function () { startGame(false); });
+on('b-settings', function () { renderMenus(); show('s-settings'); });
+on('b-calib', function () { calState(); show('s-calib'); });
+on('b-gallery', function () { unlock(); openGallery(); });
+on('b-help', function () { renderHelp(); show('s-help'); });
+on('b-credits', function () { renderCredits(); show('s-credits'); });
+document.querySelectorAll('.to-main').forEach(function (b) { b.addEventListener('click', function () { abort = true; if (testOff) { testOff(); testOff = null; } A.stopGallery && A.stopGallery(); show('s-main'); }); });
+document.querySelectorAll('.sub-back').forEach(function (b) { b.addEventListener('click', function () { renderMenus(); show('s-settings'); }); });
+var settingsFromPause = false;
+on('st-back', function () { show(settingsFromPause ? 's-paused' : 's-main'); settingsFromPause = false; });
+on('st-back2', function () { show(settingsFromPause ? 's-paused' : 's-main'); settingsFromPause = false; });
+on('st-simple', function () { T.applyPreset(st, 'simple'); if (act !== st) T.applyPreset(act, 'simple'); save(); renderMenus(); say('Simple preset on.', 'hint'); });
+on('st-real', function () { T.applyPreset(st, 'realistic'); if (act !== st) T.applyPreset(act, 'realistic'); save(); renderMenus(); say('Realistic preset on.', 'hint'); });
+var resetArm = 0;
+on('st-reset', function () {
+  var b = $('st-reset');
+  if (Date.now() - resetArm > 6000) { resetArm = Date.now(); b.textContent = 'Are you sure? Tap again to reset everything, including calibration'; say('Tap again to confirm reset.', 'hint'); return; }
+  resetArm = 0; st = T.resetSettings(store); if (!G.m) act = st; save(); b.textContent = 'Reset all settings to defaults'; renderMenus(); say('All settings reset to defaults.', 'hint');
+});
+on('g-pause', doPause);
+on('g-swing', function () { G.swing({ tPerf: performance.now(), stroke: null, power: 0.6, src: 'tap' }); });
+on('g-left', function () { G.moveDir('left'); }); on('g-right', function () { G.moveDir('right'); });
+on('g-fwd', function () { G.moveDir('forward'); }); on('g-back', function () { G.moveDir('back'); });
+on('g-score', function () { S.say(G.scoreText(), 'umpire'); });
+on('g-where', function () { S.say(G.auto() ? 'Automatic feet. The game places you for each ball.' : T.laneName(Math.round(G.pos.x)) + ', ' + T.depthName(G.pos.d), 'hint'); });
+on('g-quit', quit);
+on('p-resume', function () { show('s-game'); G.resume(); });
+on('p-score', function () { S.say(G.scoreText(), 'umpire'); });
+on('p-settings', function () { settingsFromPause = true; renderMenus(); show('s-settings'); });
+on('p-quit', quit);
+on('o-again', function () { startGame(false); });
+on('o-menu', quit);
+on('c-quick', function () { calibPhone(false); }); on('c-adv', function () { calibPhone(true); });
+on('c-test', swingTest); on('c-delay', delayTest);
+on('c-clear', function () { st.calib = null; save(); calState(); cs('Swing calibration forgotten.'); });
+on('c-camq', function () { camCalib(false); }); on('c-cama', function () { camCalib(true); }); on('c-camcheck', camCheck);
+on('c-camclear', function () { st.camCalib = null; save(); calState(); cs('Camera calibration forgotten.'); });
+on('c-stop', function () { abort = true; if (testOff) { testOff(); testOff = null; } C.stop(); S.stop(); $('c-status').textContent = 'Stopped.'; });
+on('h-read', function () { S.stop(); var p = Promise.resolve(); HELP.forEach(function (h) { p = p.then(function () { return S.say(h[0] + '. ' + h[1].join(' '), 'game'); }); }); });
+on('h-stop', function () { S.stop(); });
+// keyboard
+document.addEventListener('keydown', function (e) {
+  var tag = (e.target && e.target.tagName) || '';
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+  if (cur === 's-game') {
+    var k = e.key;
+    if (k === ' ' || k === 'Spacebar') { e.preventDefault(); G.swing({ tPerf: performance.now(), stroke: null, power: 0.6, src: 'key' }); }
+    else if (k === 'f' || k === 'F') G.swing({ tPerf: performance.now(), stroke: 'forehand', power: 0.6, src: 'key' });
+    else if (k === 'b' || k === 'B') G.swing({ tPerf: performance.now(), stroke: 'backhand', power: 0.6, src: 'key' });
+    else if (k === 'ArrowLeft') { e.preventDefault(); G.moveDir('left'); } else if (k === 'ArrowRight') { e.preventDefault(); G.moveDir('right'); }
+    else if (k === 'ArrowUp') { e.preventDefault(); G.moveDir('forward'); } else if (k === 'ArrowDown') { e.preventDefault(); G.moveDir('back'); }
+    else if (k === 's' || k === 'S') S.say(G.scoreText(), 'umpire');
+    else if (k === 'p' || k === 'P' || k === 'Escape') doPause();
+  } else if (cur === 's-paused' && (e.key === 'p' || e.key === 'P' || e.key === 'Escape')) { show('s-game'); G.resume(); }
+});
+// swipes on the match screen (without VoiceOver, or with a VoiceOver pass-through)
+var ts = null;
+$('s-game').addEventListener('touchstart', function (e) { var t = e.changedTouches[0]; ts = { x: t.clientX, y: t.clientY, t: Date.now() }; }, { passive: true });
+$('s-game').addEventListener('touchend', function (e) {
+  if (!ts) return; var t = e.changedTouches[0], dx = t.clientX - ts.x, dy = t.clientY - ts.y; ts = null;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 50) return;
+  if (Math.abs(dx) > Math.abs(dy)) G.moveDir(dx < 0 ? 'left' : 'right'); else G.moveDir(dy < 0 ? 'forward' : 'back');
+}, { passive: true });
+document.addEventListener('visibilitychange', function () { if (document.hidden && cur === 's-game' && G.m && !G.paused) doPause(); if (!document.hidden && cur === 's-game') wakeLock(); });
+root.TBUI = { show: show, st: function () { return st; }, act: function () { return act; }, MENUS: MENUS, openSub: openSub, GAL: GAL };
+show('s-main');
+})(this);
+</script>
+</body>
+</html>
